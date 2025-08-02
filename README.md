@@ -4,11 +4,11 @@
 
 ## 演示截图
 
-![功能演示1](./assets/demo1.png)
+![功能演示1](assets/demo1.png)
 
-![功能演示2](./assets/demo2.png)
+![功能演示2](assets/demo2.png)
 
-![应用主界面](./assets/demo.png)
+![应用主界面](assets/demo.png)
 
 ## 主要特性
 
