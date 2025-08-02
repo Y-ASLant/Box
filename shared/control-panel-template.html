@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Controls</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .controls {
+      display: flex;
+      padding: 10px;
+      gap: 10px;
+      justify-content: center;
+    }
+    .control-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      position: relative;
+    }
+    .back-btn { background-color: #4a90e2; }
+    .minimize-btn { background-color: #ffbd44; }
+    .maximize-btn { background-color: #00ca56; }
+    .close-btn { background-color: #ff605c; }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button class="control-btn back-btn" id="back"></button>
+    <button class="control-btn minimize-btn" id="minimize"></button>
+    <button class="control-btn maximize-btn" id="maximize"></button>
+    <button class="control-btn close-btn" id="close"></button>
+  </div>
+  <script>
+    const back = document.getElementById('back');
+    const minimize = document.getElementById('minimize');
+    const maximize = document.getElementById('maximize');
+    const close = document.getElementById('close');
+    
+    if (window.electronAPI) {
+      back.addEventListener('click', () => window.electronAPI.returnToLogin());
+      minimize.addEventListener('click', () => window.electronAPI.minimizeWindow());
+      maximize.addEventListener('click', () => window.electronAPI.maximizeWindow());
+      close.addEventListener('click', () => window.electronAPI.closeWindow());
+    }
+  </script>
+</body>
+</html>
