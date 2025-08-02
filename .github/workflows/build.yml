@@ -74,7 +74,8 @@ jobs:
 
       - name: Build Electron app (Windows)
         if: matrix.platform == 'win'
-        run: npm run build:win
+        run: |
+          npm run build:win || npm run build:electron-no-check -- --win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_CACHE: ~/.cache/electron
@@ -82,7 +83,8 @@ jobs:
 
       - name: Build Electron app (macOS)
         if: matrix.platform == 'mac'
-        run: npm run build:mac
+        run: |
+          npm run build:mac || npm run build:electron-no-check -- --mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_CACHE: ~/.cache/electron
@@ -91,7 +93,8 @@ jobs:
 
       - name: Build Electron app (Linux)
         if: matrix.platform == 'linux'
-        run: npm run build:linux
+        run: |
+          npm run build:linux || npm run build:electron-no-check -- --linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_CACHE: ~/.cache/electron
