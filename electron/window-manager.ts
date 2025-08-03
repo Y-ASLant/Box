@@ -1,7 +1,7 @@
 import { BrowserWindow, app, globalShortcut, Menu, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { injectControlsScript, customScrollbarCSS, injectBaseStyles, injectNewWindowStyles, injectNewWindowBehaviors } from './controls-injector';
+import { injectControlsScript, customScrollbarCSS, hiddenScrollbarCSS, injectBaseStyles, injectNewWindowStyles, injectNewWindowBehaviors } from './controls-injector';
 import type { WindowOptions } from '../shared/types';
 
 // 保持窗口对象的全局引用，避免JavaScript对象被垃圾回收时窗口关闭
@@ -90,7 +90,7 @@ export function toggleControlsWindow() {
  * 通用窗口事件处理器
  * 抽象重复的窗口事件处理逻辑
  */
-function setupCommonWindowEvents(window: BrowserWindow, isMainWindow: boolean = false) {
+function setupCommonWindowEvents(window: BrowserWindow, isMainWindow: boolean = false, hiddenButtons: string[] = []) {
   // 禁用双击标题栏最大化
   window.webContents.on('before-input-event', (event, input) => {
     // 如果是Alt+F4组合键，阻止默认行为
@@ -102,7 +102,7 @@ function setupCommonWindowEvents(window: BrowserWindow, isMainWindow: boolean = 
   // 每次DOM准备好时，注入基础样式
   window.webContents.on('dom-ready', () => {
     if (isMainWindow) {
-      injectBaseStyles(window);
+      injectBaseStyles(window, hiddenButtons);
     } else {
       injectNewWindowStyles(window);
       injectNewWindowBehaviors(window);
@@ -128,10 +128,13 @@ function setupCommonWindowEvents(window: BrowserWindow, isMainWindow: boolean = 
     }
   });
 
-  // 为所有网页注入自定义滚动条CSS
+  // 根据隐藏参数决定使用哪种滚动条样式
+  const scrollbarCSS = hiddenButtons.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
+  
+  // 为所有网页注入滚动条CSS
   window.webContents.on('did-finish-load', () => {
     if (window && !window.isDestroyed()) {
-      window.webContents.insertCSS(customScrollbarCSS).catch(() => {
+      window.webContents.insertCSS(scrollbarCSS).catch(() => {
         // 出错时静默处理，生产环境不显示错误
       });
     }
@@ -140,7 +143,7 @@ function setupCommonWindowEvents(window: BrowserWindow, isMainWindow: boolean = 
   // 监听页面导航，为新页面注入CSS
   window.webContents.on('did-navigate', () => {
     if (window && !window.isDestroyed()) {
-      window.webContents.insertCSS(customScrollbarCSS).catch(() => {
+      window.webContents.insertCSS(scrollbarCSS).catch(() => {
         // 出错时静默处理，生产环境不显示错误
       });
     }
@@ -285,7 +288,7 @@ export function createWindow(options: WindowOptions = {}, hiddenButtons: string[
   mainWindow = new BrowserWindow(windowConfig);
 
   // 设置通用窗口事件处理
-  setupCommonWindowEvents(mainWindow, true);
+  setupCommonWindowEvents(mainWindow, true, hiddenButtons);
 
   // 设置主窗口特有的事件处理
   setupMainWindowSpecificEvents(hiddenButtons);
@@ -362,6 +365,9 @@ function setupNewWindowHandler() {
 
 // 设置新窗口特有的事件处理
 function setupNewWindowSpecificEvents(newWindow: BrowserWindow) {
+  // 设置通用窗口事件处理
+  setupCommonWindowEvents(newWindow, false, []);
+  
   // 为新窗口添加Ctrl+Shift+Alt快捷键支持
   newWindow.webContents.on('before-input-event', (event, input) => {
     // 如果按下了Ctrl+Shift+Alt组合键

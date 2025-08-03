@@ -1,12 +1,12 @@
 import { BrowserWindow } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { customScrollbarCSS, disableTextSelectionCSS, dragRegionCSS, newWindowCSS, baseWindowCSS } from '../shared/styles';
+import { customScrollbarCSS, hiddenScrollbarCSS, disableTextSelectionCSS, dragRegionCSS, newWindowCSS, baseWindowCSS } from '../shared/styles';
 import { generateControlPanelScript } from '../shared/control-panel-generator';
 import type { ButtonConfig } from '../shared/types';
 
 // 重新导出样式，保持向后兼容
-export { customScrollbarCSS };
+export { customScrollbarCSS, hiddenScrollbarCSS };
 
 // 注入控制脚本到webContents
 export function injectControlsScript(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
@@ -57,11 +57,15 @@ export function hideControlPanel(targetWindow: BrowserWindow) {
 }
 
 // 注入基础样式和拖动区域
-export function injectBaseStyles(targetWindow: BrowserWindow) {
+export function injectBaseStyles(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
   if (!targetWindow || targetWindow.isDestroyed()) return;
 
   // 注入基础样式
   targetWindow.webContents.insertCSS(baseWindowCSS).catch(e => console.error('插入CSS错误:', e));
+  
+  // 根据隐藏参数决定使用哪种滚动条样式
+  const scrollbarCSS = hiddenButtons.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
+  targetWindow.webContents.insertCSS(scrollbarCSS).catch(e => console.error('插入滚动条CSS错误:', e));
 
   // 将disable-select类添加到body并创建拖动区域
   targetWindow.webContents.executeJavaScript(`

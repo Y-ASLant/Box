@@ -44,6 +44,52 @@ export const customScrollbarCSS = `
 `;
 
 /**
+ * 隐藏滚动条样式
+ * 完全隐藏滚动条但保持滚动功能
+ */
+export const hiddenScrollbarCSS = `
+/* Webkit 浏览器隐藏滚动条 */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox 浏览器隐藏滚动条 */
+* {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
+/* 确保滚动功能仍然可用 */
+body, html {
+  overflow: auto;
+}
+
+/* 隐藏所有滚动条但保持滚动功能 */
+.scroll-container {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+`;
+
+/**
  * 禁用文本选择的样式
  * 用于防止用户选择文本的通用样式
  */
