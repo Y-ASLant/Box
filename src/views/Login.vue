@@ -165,13 +165,14 @@ const clearHistory = async () => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
   background-size: cover !important;
   background-position: center center !important;
   background-repeat: no-repeat !important;
   font-family: Arial, sans-serif;
   position: relative;
   overflow: hidden;
+  transition: background-color 0.3s ease;
 }
 
 /* 添加一个伪元素确保背景图片始终显示 */
@@ -191,10 +192,10 @@ const clearHistory = async () => {
 }
 
 .login-box {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: var(--backdrop-blur);
   padding: 40px;
   border-radius: 10px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 30px var(--shadow-medium);
   width: 400px;
   max-width: 90%;
   text-align: center;
@@ -202,12 +203,14 @@ const clearHistory = async () => {
   z-index: 1;
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 h1 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 30px;
   font-size: 28px;
+  transition: color 0.3s ease;
 }
 
 .input-group {
@@ -218,27 +221,30 @@ h1 {
 label {
   display: block;
   margin-bottom: 8px;
-  color: #555;
+  color: var(--text-secondary);
   font-size: 16px;
+  transition: color 0.3s ease;
 }
 
 input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 16px;
   box-sizing: border-box;
-  transition: border-color 0.3s;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease;
 }
 
 input:focus {
   outline: none;
-  border-color: #4a90e2;
+  border-color: var(--button-primary);
 }
 
 button {
-  background-color: #4a90e2;
+  background-color: var(--button-primary);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -250,30 +256,32 @@ button {
 }
 
 button:hover {
-  background-color: #3a80d2;
+  background-color: var(--button-primary-hover);
 }
 
 button:disabled {
-  background-color: #cccccc;
+  background-color: var(--button-disabled);
   cursor: not-allowed;
 }
 
 .error-message {
-  color: #e74c3c;
+  color: var(--error-color);
   margin-top: 16px;
   font-size: 14px;
+  transition: color 0.3s ease;
 }
 
 .recent-urls {
   margin-top: 30px;
   text-align: left;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-light);
   padding-top: 20px;
+  transition: border-color 0.3s ease;
 }
 
 .recent-urls h3 {
   font-size: 16px;
-  color: #555;
+  color: var(--text-secondary);
   margin-bottom: 15px;
   cursor: pointer;
   display: flex;
@@ -283,16 +291,16 @@ button:disabled {
 }
 
 .recent-urls h3:hover {
-  color: #e74c3c;
+  color: var(--error-color);
 }
 
 .recent-urls h3 .clear-icon {
   transition: stroke 0.3s;
-  stroke: #999;
+  stroke: var(--text-tertiary);
 }
 
 .recent-urls h3:hover .clear-icon {
-  stroke: #e74c3c;
+  stroke: var(--error-color);
 }
 
 .recent-urls ul {
@@ -302,20 +310,20 @@ button:disabled {
 }
 
 .recent-urls li {
-  background-color: #f9f9f9;
+  background-color: var(--bg-tertiary);
   padding: 12px 15px;
   border-radius: 6px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+  transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s, color 0.3s ease;
   font-size: 15px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .recent-urls li:hover {
-  background-color: #eef5ff;
-  color: #3a80d2;
+  background-color: var(--button-primary);
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--shadow-light);
 }
-</style> 
+</style>
