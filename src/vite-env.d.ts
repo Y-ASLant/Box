@@ -14,6 +14,9 @@ interface AppConfig {
   page?: string;
   hide?: string;
   bg?: string;
+  theme?: string;
+  customConfig?: string;
+  [key: string]: any;
 }
 
 // 声明Electron API类型
@@ -34,6 +37,8 @@ interface ElectronAPI {
   getBackgroundPath: () => Promise<string | undefined>;
   // 添加清除历史和缓存函数类型
   clearHistoryAndCache: () => Promise<boolean>;
+  // 添加获取命令行参数函数类型
+  getCommandLineArgs?: () => string[];
 }
 
 interface Window {

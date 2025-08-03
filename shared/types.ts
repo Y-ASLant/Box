@@ -18,6 +18,8 @@ export interface AppConfig {
   hide?: string;
   /** 背景图片路径 */
   bg?: string;
+  /** 主题设置：light | dark */
+  theme?: string;
   /** 自定义配置（前端扩展字段） */
   customConfig?: string;
   /** 其他动态配置字段 */
@@ -42,15 +44,21 @@ export interface WindowOptions {
  * 命令行参数和配置文件合并后的最终配置
  */
 export interface ParsedConfig {
-  /** 启动URL */
-  startUrl: string | null;
+  /** 启动链接地址 */
+  link: string | null;
+  /** 窗口模式 */
+  mode: string | null;
+  /** 主题设置 */
+  theme: string | null;
+  /** 隐藏的按钮列表（逗号分隔字符串） */
+  hide: string | null;
   /** 是否全屏模式 */
   isFullscreen: boolean;
   /** 是否窗口置顶 */
   isPinned: boolean;
   /** 是否单页模式 */
   isSinglePageMode: boolean;
-  /** 隐藏的按钮列表 */
+  /** 隐藏的按钮列表（解析后的数组） */
   hiddenButtons: string[];
   /** 背景图片路径 */
   bgPath: string | null;

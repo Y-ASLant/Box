@@ -1,5 +1,6 @@
 <template>
   <button 
+    v-if="!isHidden"
     class="theme-toggle" 
     @click="toggleTheme"
     :aria-label="isDarkMode() ? '切换到浅色模式' : '切换到深色模式'"
@@ -40,10 +41,34 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { useTheme } from '../composables/useTheme';
 
 // 使用主题管理 composable
 const { toggleTheme, isDarkMode } = useTheme();
+
+// 是否隐藏主题切换按钮
+const isHidden = ref(false);
+
+// 检查是否应该隐藏按钮
+const checkHideStatus = async () => {
+  if (window.electronAPI && window.electronAPI.getAppConfig) {
+    try {
+      const config = await window.electronAPI.getAppConfig();
+      if (config.hide) {
+        const hiddenButtons = config.hide.split(',').map((btn: string) => btn.trim());
+        isHidden.value = hiddenButtons.includes('theme');
+      }
+    } catch (error) {
+      console.warn('无法获取应用配置:', error);
+    }
+  }
+};
+
+// 组件挂载时检查隐藏状态
+onMounted(() => {
+  checkHideStatus();
+});
 </script>
 
 <style scoped>

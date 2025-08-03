@@ -2,13 +2,20 @@ import { ipcMain, BrowserWindow, app, shell } from 'electron';
 import { getMainWindow, toggleControlsWindow, loadLoginPage } from './window-manager';
 import { getAppConfig, getBackgroundPath } from './config';
 import { injectControlsScript } from './controls-injector';
+import type { ParsedConfig } from '../shared/types';
 
 // 全局变量
 let isSinglePageMode = false;
+let parsedConfig: ParsedConfig | null = null;
 
 // 设置单页模式
 export function setSinglePageMode(mode: boolean) {
   isSinglePageMode = mode;
+}
+
+// 设置解析后的配置
+export function setParsedConfig(config: ParsedConfig) {
+  parsedConfig = config;
 }
 
 // 注册所有IPC处理程序
@@ -116,7 +123,13 @@ export function registerIPCHandlers() {
 
   // 获取应用配置
   ipcMain.handle('get-app-config', () => {
-    return getAppConfig();
+    // 返回合并后的配置，包含解析后的主题和隐藏信息
+    const baseConfig = getAppConfig();
+    return {
+      ...baseConfig,
+      theme: parsedConfig?.theme || baseConfig.theme,
+      hide: parsedConfig?.hide || baseConfig.hide
+    };
   });
 
   // 获取背景图片路径

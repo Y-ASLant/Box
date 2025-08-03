@@ -31,6 +31,14 @@ const DEFAULT_BUTTON_CONFIGS: ButtonConfig[] = [
  * @returns 完整的控制面板脚本
  */
 export function generateControlPanelScript(hiddenButtons: string[]): string {
+  // 如果隐藏列表包含 'control'，则不生成任何控制面板
+  if (hiddenButtons.includes('control')) {
+    return `
+      // 控制面板已被隐藏
+      console.log('控制面板已通过 -hide=control 参数隐藏');
+    `;
+  }
+  
   return getSimpleControlScript(hiddenButtons);
 }
 

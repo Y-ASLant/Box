@@ -44,19 +44,26 @@ export function parseAndMergeConfig(argv: string[], isPackaged: boolean): Parsed
   const pageArg = args.find(arg => arg.startsWith('-page='));
   const hideArg = args.find(arg => arg.startsWith('-hide='));
   const bgArg = args.find(arg => arg.startsWith('-bg='));
+  const themeArg = args.find(arg => arg.startsWith('-theme='));
 
   // 优先使用配置文件中的设置，如果不存在则使用命令行参数
-  const startUrl = appConfig.link || (linkArg ? linkArg.split('=')[1] : null);
-  const isFullscreen = appConfig.mode === 'fullscreen' || (modeArg ? modeArg.split('=')[1] === 'fullscreen' : false);
+  const link = appConfig.link || (linkArg ? linkArg.split('=')[1] : null);
+  const mode = appConfig.mode || (modeArg ? modeArg.split('=')[1] : null);
+  const theme = appConfig.theme || (themeArg ? themeArg.split('=')[1] : null);
+  const hide = appConfig.hide || (hideArg ? hideArg.split('=')[1] : null);
+  const isFullscreen = mode === 'fullscreen';
   const isPinned = appConfig.window === 'top' || (windowArg ? windowArg.split('=')[1] === 'top' : false);
   const isSinglePageMode = appConfig.page === 'single' || (pageArg ? pageArg.split('=')[1] === 'single' : false);
-  const hiddenButtons = appConfig.hide ? appConfig.hide.split(',') : (hideArg ? hideArg.split('=')[1].split(',') : []);
-  
+  const hiddenButtons = hide ? hide.split(',') : [];
+
   // 解析背景图片路径
   const bgPath = appConfig.bg || (bgArg ? bgArg.split('=')[1] : null);
 
   return {
-    startUrl,
+    link,
+    mode,
+    theme,
+    hide,
     isFullscreen,
     isPinned,
     isSinglePageMode,

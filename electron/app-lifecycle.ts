@@ -1,7 +1,7 @@
 import { app, globalShortcut, session, protocol } from 'electron';
 import { loadConfigFile, parseAndMergeConfig } from './config';
 import { createWindow, cleanupWindows, getMainWindow } from './window-manager';
-import { registerIPCHandlers, setSinglePageMode, updateDomReadyHandler } from './ipc-handlers';
+import { registerIPCHandlers, setSinglePageMode, updateDomReadyHandler, setParsedConfig } from './ipc-handlers';
 
 // 应用初始化
 export function initializeApp() {
@@ -56,6 +56,9 @@ function startApplication() {
   
   // 设置单页模式
   setSinglePageMode(config.isSinglePageMode);
+  
+  // 设置解析后的配置（包含主题信息）
+  setParsedConfig(config);
   
   // 注册IPC处理程序
   registerIPCHandlers();
