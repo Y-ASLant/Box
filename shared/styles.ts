@@ -201,6 +201,27 @@ export const controlPanelCSS = `
 `;
 
 /**
+ * 隐藏鼠标光标样式
+ * 完全隐藏鼠标光标
+ */
+export const hiddenMouseCSS = `
+/* 隐藏鼠标光标 */
+* {
+  cursor: none !important;
+}
+
+/* 在输入框中仍然显示文本光标 */
+input, textarea, [contenteditable="true"] {
+  cursor: text !important;
+}
+
+/* 在链接上显示指针 */
+a, button {
+  cursor: none !important;
+}
+`;
+
+/**
  * 组合所有基础样式
  * 用于主窗口的基础样式注入
  */

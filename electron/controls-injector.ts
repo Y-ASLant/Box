@@ -1,12 +1,12 @@
 import { BrowserWindow } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { customScrollbarCSS, hiddenScrollbarCSS, disableTextSelectionCSS, dragRegionCSS, newWindowCSS, baseWindowCSS } from '../shared/styles';
+import { customScrollbarCSS, hiddenScrollbarCSS, hiddenMouseCSS, disableTextSelectionCSS, dragRegionCSS, newWindowCSS, baseWindowCSS } from '../shared/styles';
 import { generateControlPanelScript } from '../shared/control-panel-generator';
 import type { ButtonConfig } from '../shared/types';
 
 // 重新导出样式，保持向后兼容
-export { customScrollbarCSS, hiddenScrollbarCSS };
+export { customScrollbarCSS, hiddenScrollbarCSS, hiddenMouseCSS };
 
 // 注入控制脚本到webContents
 export function injectControlsScript(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
@@ -62,10 +62,15 @@ export function injectBaseStyles(targetWindow: BrowserWindow, hiddenButtons: str
 
   // 注入基础样式
   targetWindow.webContents.insertCSS(baseWindowCSS).catch(e => console.error('插入CSS错误:', e));
-  
+
   // 根据隐藏参数决定使用哪种滚动条样式
   const scrollbarCSS = hiddenButtons.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
   targetWindow.webContents.insertCSS(scrollbarCSS).catch(e => console.error('插入滚动条CSS错误:', e));
+
+  // 根据隐藏参数决定是否隐藏鼠标光标
+  if (hiddenButtons.includes('mouse')) {
+    targetWindow.webContents.insertCSS(hiddenMouseCSS).catch(e => console.error('插入隐藏鼠标CSS错误:', e));
+  }
 
   // 将disable-select类添加到body并创建拖动区域
   targetWindow.webContents.executeJavaScript(`
@@ -86,10 +91,15 @@ export function injectBaseStyles(targetWindow: BrowserWindow, hiddenButtons: str
 }
 
 // 为新窗口注入样式（包含更严格的文本选择禁用）
-export function injectNewWindowStyles(targetWindow: BrowserWindow) {
+export function injectNewWindowStyles(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
   if (!targetWindow || targetWindow.isDestroyed()) return;
 
   targetWindow.webContents.insertCSS(newWindowCSS).catch(e => console.error('插入CSS错误:', e));
+
+  // 根据隐藏参数决定是否隐藏鼠标光标
+  if (hiddenButtons.includes('mouse')) {
+    targetWindow.webContents.insertCSS(hiddenMouseCSS).catch(e => console.error('插入隐藏鼠标CSS错误:', e));
+  }
 }
 
 // 为新窗口注入JavaScript行为

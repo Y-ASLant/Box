@@ -139,13 +139,14 @@ npm run build:electron-fast
   - **示例:** `Box.exe -theme=dark`
   - **示例:** `Box.exe -theme=light`
 
-- `-hide=<elements>`: 隐藏UI元素。支持隐藏控制面板按钮、主题切换按钮和滚动条。
+- `-hide=<elements>`: 隐藏UI元素。支持隐藏控制面板按钮、主题切换按钮、滚动条和鼠标光标。
   - `control`: 隐藏整个控制面板
   - `theme`: 隐藏主题切换按钮
   - `scroll`: 隐藏滚动条（保持滚动功能）
+  - `mouse`: 隐藏鼠标光标（在输入框中仍显示文本光标）
   - `home`, `minimize`, `maximize`, `close`, `fullscreen`: 隐藏对应的控制按钮
   - **示例:** `Box.exe -hide=control,scroll`
-  - **示例:** `Box.exe -hide=theme`
+  - **示例:** `Box.exe -hide=theme,mouse`
   - **示例:** `Box.exe -hide=home,close`
 
 - `-bg=<path>`: 设置登录界面的背景图片。
@@ -162,6 +163,9 @@ Box.exe -mode=fullscreen -hide=control,scroll
 
 # 演示模式：深色主题 + 隐藏滚动条
 Box.exe -theme=dark -hide=scroll
+
+# 沉浸模式：隐藏鼠标光标 + 控制面板
+Box.exe -hide=mouse,control
 
 # 自定义界面：指定网站 + 隐藏部分按钮
 Box.exe -link=https://example.com -hide=minimize,maximize

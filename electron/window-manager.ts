@@ -104,7 +104,7 @@ function setupCommonWindowEvents(window: BrowserWindow, isMainWindow: boolean = 
     if (isMainWindow) {
       injectBaseStyles(window, hiddenButtons);
     } else {
-      injectNewWindowStyles(window);
+      injectNewWindowStyles(window, hiddenButtons);
       injectNewWindowBehaviors(window);
     }
   });
@@ -294,7 +294,7 @@ export function createWindow(options: WindowOptions = {}, hiddenButtons: string[
   setupMainWindowSpecificEvents(hiddenButtons);
 
   // 设置新窗口处理
-  setupNewWindowHandler();
+  setupNewWindowHandler(hiddenButtons);
 
   // 加载应用的入口文件
   loadMainWindowContent(startUrl);
@@ -331,7 +331,7 @@ function setupMainWindowSpecificEvents(hiddenButtons: string[]) {
 }
 
 // 设置新窗口处理
-function setupNewWindowHandler() {
+function setupNewWindowHandler(hiddenButtons: string[] = []) {
   if (!mainWindow) return;
 
   // 处理新窗口的打开请求（比如target="_blank"的链接）
@@ -354,19 +354,19 @@ function setupNewWindowHandler() {
     newWindow.loadURL(url);
 
     // 设置通用窗口事件处理
-    setupCommonWindowEvents(newWindow, false);
+    setupCommonWindowEvents(newWindow, false, hiddenButtons);
 
     // 设置新窗口特有的事件处理
-    setupNewWindowSpecificEvents(newWindow);
+    setupNewWindowSpecificEvents(newWindow, hiddenButtons);
 
     return { action: 'deny' }; // 阻止默认行为，因为我们已经手动处理了
   });
 }
 
 // 设置新窗口特有的事件处理
-function setupNewWindowSpecificEvents(newWindow: BrowserWindow) {
+function setupNewWindowSpecificEvents(newWindow: BrowserWindow, hiddenButtons: string[] = []) {
   // 设置通用窗口事件处理
-  setupCommonWindowEvents(newWindow, false, []);
+  setupCommonWindowEvents(newWindow, false, hiddenButtons);
   
   // 为新窗口添加Ctrl+Shift+Alt快捷键支持
   newWindow.webContents.on('before-input-event', (event, input) => {
