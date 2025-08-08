@@ -68,7 +68,7 @@ function startApplication() {
   
   // 创建主窗口
   createWindow({
-    startUrl: config.startUrl,
+    startUrl: config.link,
     fullscreen: config.isFullscreen,
     alwaysOnTop: config.isPinned
   }, config.hiddenButtons);
