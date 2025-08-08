@@ -104,6 +104,8 @@ export function registerIPCHandlers() {
   ipcMain.handle('close-window', (event) => {
     const targetWindow = BrowserWindow.fromWebContents(event.sender);
     if (targetWindow && !targetWindow.isDestroyed()) {
+      // 移除所有close事件监听器，然后强制关闭
+      targetWindow.removeAllListeners('close');
       targetWindow.close();
       return true;
     }

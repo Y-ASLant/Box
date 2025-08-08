@@ -143,19 +143,27 @@ export function injectNewWindowBehaviors(targetWindow: BrowserWindow) {
       e.stopPropagation();
     }, true);
     
-    // 禁用复制快捷键（除了在输入框中）
+    // 禁用复制快捷键和Alt+F4关闭快捷键（除了在输入框中）
     document.addEventListener('keydown', (e) => {
       // 检查是否在可编辑元素中
-      const isEditableElement = e.target.tagName === 'INPUT' || 
-                               e.target.tagName === 'TEXTAREA' || 
+      const isEditableElement = e.target.tagName === 'INPUT' ||
+                               e.target.tagName === 'TEXTAREA' ||
                                e.target.contentEditable === 'true';
-      
+
+      // 禁用Alt+F4关闭窗口
+      if (e.altKey && e.key === 'F4') {
+        console.log('页面级别拦截Alt+F4');
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+
       // 禁用Ctrl+A, Ctrl+C, Ctrl+V等复制相关快捷键（除了在输入框中）
       if (!isEditableElement && e.ctrlKey && (e.key === 'a' || e.key === 'c' || e.key === 'v' || e.key === 'x')) {
         e.preventDefault();
         return false;
       }
-      
+
     });
     
     // 添加disable-select类到body

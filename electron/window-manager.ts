@@ -91,11 +91,22 @@ export function toggleControlsWindow() {
  * 抽象重复的窗口事件处理逻辑
  */
 function setupCommonWindowEvents(window: BrowserWindow, isMainWindow: boolean = false, hiddenButtons: string[] = []) {
-  // 禁用双击标题栏最大化
+  // 阻止窗口关闭（包括Alt+F4等方式）
+  window.on('close', (event) => {
+    event.preventDefault();
+    // 如果是主窗口，可以选择最小化而不是关闭
+    if (isMainWindow) {
+      window.minimize();
+    }
+    return false;
+  });
+
+  // 禁用双击标题栏最大化和Alt+F4
   window.webContents.on('before-input-event', (event, input) => {
     // 如果是Alt+F4组合键，阻止默认行为
     if (input.alt && input.key === 'F4') {
       event.preventDefault();
+      return false;
     }
   });
 
@@ -318,7 +329,23 @@ function setupMainWindowSpecificEvents(hiddenButtons: string[]) {
     if (isMaximizing) return;
   });
 
-  // 当窗口关闭时触发
+  // 移除通用的close事件处理，为主窗口添加特殊处理
+  mainWindow.removeAllListeners('close');
+
+  // 主窗口的关闭事件处理 - 阻止Alt+F4等快捷键关闭
+  mainWindow.on('close', (event) => {
+    // 阻止默认关闭行为
+    event.preventDefault();
+
+    // 可以选择最小化窗口而不是关闭
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.minimize();
+    }
+
+    return false;
+  });
+
+  // 当窗口关闭时触发（这个事件在窗口真正关闭时才会触发）
   mainWindow.on('closed', () => {
     // 确保控制窗口也被关闭
     if (controlsWindow && !controlsWindow.isDestroyed()) {
@@ -430,10 +457,15 @@ function setupGlobalShortcuts() {
     return false;
   });
 
-  // 禁用Alt+F4关闭窗口
-  globalShortcut.register('Alt+F4', () => {
-    return false;
-  });
+  // 禁用Alt+F4关闭窗口 - 跨平台处理
+  try {
+    globalShortcut.register('Alt+F4', () => {
+      console.log('Alt+F4 被拦截');
+      return false;
+    });
+  } catch (error) {
+    console.warn('无法注册Alt+F4全局快捷键:', error);
+  }
 }
 
 // 清理窗口资源
