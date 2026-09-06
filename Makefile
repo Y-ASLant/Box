@@ -1,9 +1,28 @@
-.PHONY: build clean
+PNPM ?= pnpm
+NODE ?= node
+REMOVE := $(NODE) -e "const { rmSync } = require('node:fs'); for (const path of process.argv.slice(1)) rmSync(path, { recursive: true, force: true });"
+
+BUILD_OUTPUTS := dist dist-electron build
+CACHE_OUTPUTS := node_modules/.vite node_modules/.cache
+LOG_OUTPUTS := logs
+
+.DEFAULT_GOAL := build
+.PHONY: build clean clear distclean
 
 # 类型检查、构建并打包应用，输出到 build/
 build:
-	pnpm run build:electron
+	$(PNPM) run build:electron
 
-# 清理构建产物
+# 清理构建产物、工具缓存、日志和临时文件，保留已安装依赖
 clean:
-	pnpm exec del-cli dist dist-electron build
+	@$(REMOVE) $(BUILD_OUTPUTS) $(CACHE_OUTPUTS) $(LOG_OUTPUTS)
+	@$(NODE) -e "const { readdirSync, rmSync } = require('node:fs'); for (const entry of readdirSync('.', { withFileTypes: true })) if (entry.isFile() && (/\.(?:log|tmp|temp|tsbuildinfo)$$/.test(entry.name) || entry.name.startsWith('pnpm-debug.log'))) rmSync(entry.name, { force: true });"
+	@$(NODE) -e "console.log('Clean complete.')"
+
+# 兼容旧命令
+clear: clean
+
+# 恢复到仅保留源码和锁文件的状态
+distclean: clean
+	@$(REMOVE) node_modules .pnpm-store
+	@$(NODE) -e "console.log('Dependencies removed.')"

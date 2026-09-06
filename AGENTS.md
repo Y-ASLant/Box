@@ -40,8 +40,9 @@ pnpm build:electron    # full checks + Electron bundle/package
 pnpm build:electron-fast  # package without type checks
 pnpm build:win         # checked Windows package; mac/linux variants also exist
 make build             # checked Electron package
-make clean             # deletes dist/, dist-electron/, and build/
+make clean             # deletes generated outputs, caches, logs, and temporary files
 make clear             # compatibility alias for make clean
+make distclean         # make clean plus node_modules/ and repo-local .pnpm-store/
 ```
 
 There are no `test`, `lint`, `format`, or coverage commands. Do not invent or claim them. `build:no-check` and `build:electron-fast` intentionally skip type checks.

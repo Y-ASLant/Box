@@ -42,7 +42,8 @@ pnpm run build      # 检查并构建 renderer
 ```bash
 pnpm run build:electron  # 检查并打包
 make build               # 同上
-make clean               # 清理 dist、dist-electron 和 build
+make clean               # 清理构建产物、缓存、日志和临时文件
+make distclean           # 在 clean 基础上删除 node_modules 和本地 pnpm store
 ```
 
 需要跳过类型检查时可使用 `pnpm run build:electron-fast`。
