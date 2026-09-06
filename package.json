@@ -1,0 +1,117 @@
+{
+  "name": "box",
+  "private": true,
+  "version": "1.0.0",
+  "description": "一个专用于web演示的Electron应用",
+  "author": "ASlant <aslant2002@outlook.com>",
+  "license": "MIT",
+  "packageManager": "pnpm@12.3.4",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "build:no-check": "vite build",
+    "build:electron": "vue-tsc && vite build --config electron.vite.config.mjs && electron-builder",
+    "build:electron-fast": "vite build --config electron.vite.config.mjs && electron-builder",
+    "build:win": "pnpm run build:electron --win",
+    "build:mac": "pnpm run build:electron --mac",
+    "build:linux": "pnpm run build:electron --linux",
+    "preview": "vite preview",
+    "electron:dev": "vite --config electron.vite.config.mjs",
+    "start": "pnpm run electron:dev"
+  },
+  "dependencies": {
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "del-cli": "^7.0.0",
+    "electron": "^44.2.0",
+    "electron-builder": "^26.15.3",
+    "terser": "^5.51.2",
+    "typescript": "^5.9.0",
+    "vite": "^8.2.2",
+    "vite-plugin-electron": "^1.1.2",
+    "vite-plugin-electron-renderer": "^1.0.0",
+    "vue-tsc": "^3.3.11"
+  },
+  "build": {
+    "appId": "top.aslant.box",
+    "productName": "Box",
+    "directories": {
+      "output": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "assets/**/*"
+    ],
+    "compression": "maximum",
+    "asar": true,
+    "removePackageScripts": true,
+    "extraResources": [],
+    "extraFiles": [],
+    "electronLanguages": [
+      "zh-CN"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "./assets/index.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Box",
+      "perMachine": false,
+      "deleteAppDataOnUninstall": true,
+      "installerIcon": "./assets/index.ico",
+      "uninstallerIcon": "./assets/index.ico",
+      "installerHeaderIcon": "./assets/index.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "./assets/index.ico"
+    },
+    "linux": {
+      "icon": "assets",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "Utility",
+      "maintainer": "ASlant <aslant2002@outlook.com>",
+      "vendor": "ASlant",
+      "synopsis": "Box",
+      "description": "一个专用于web演示的Electron应用."
+    }
+  }
+}

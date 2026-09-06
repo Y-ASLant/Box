@@ -1,0 +1,8 @@
+overrides:
+  rimraf: latest
+  '@npmcli/move-file': latest
+
+allowBuilds:
+  electron: true
+  electron-winstaller: true
+  esbuild: true
