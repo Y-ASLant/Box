@@ -1,18 +1,13 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import electron from 'vite-plugin-electron';
-import renderer from 'vite-plugin-electron-renderer';
 import { rmSync } from 'node:fs';
 import {
   commonBuildConfig,
   commonServerConfig,
   getCommonResolveConfig,
-  getElectronBuildConfig,
-  getDirname
-} from './shared/build-config.mts';
-
-// 获取当前文件的目录路径
-const __dirname = getDirname(import.meta.url);
+  getElectronBuildConfig
+} from './vite.shared.mts';
 
 // 清除之前的构建目录
 rmSync('dist-electron', { recursive: true, force: true });
@@ -42,10 +37,9 @@ export default defineConfig({
         },
       },
     ]),
-    renderer(),
   ],
   base: './',
-  resolve: getCommonResolveConfig(__dirname),
+  resolve: getCommonResolveConfig(import.meta.dirname),
   server: commonServerConfig,
   build: commonBuildConfig,
 });

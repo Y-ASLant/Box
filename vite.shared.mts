@@ -2,12 +2,6 @@
 // 统一管理 Vite 构建配置，避免重复
 
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-// 获取当前文件的目录路径（用于 ESM 模块）
-export function getDirname(importMetaUrl: string): string {
-  return fileURLToPath(new URL('.', importMetaUrl));
-}
 
 /**
  * 通用的 Vite 构建配置

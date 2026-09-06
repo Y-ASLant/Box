@@ -1,30 +1,6 @@
 // 控制面板脚本生成器
 // 用于生成注入到页面中的控制面板脚本
 
-import type { ButtonConfig } from './types';
-
-/**
- * SVG 图标定义
- */
-const CONTROL_ICONS = {
-  home: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
-  minimize: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
-  maximize: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>',
-  close: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
-  fullscreen: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>'
-};
-
-/**
- * 默认按钮配置
- */
-const DEFAULT_BUTTON_CONFIGS: ButtonConfig[] = [
-  { name: 'home', color: '#4361ee', icon: CONTROL_ICONS.home, action: 'return-to-login' },
-  { name: 'minimize', color: '#f9c74f', icon: CONTROL_ICONS.minimize, action: 'minimize' },
-  { name: 'maximize', color: '#2ec4b6', icon: CONTROL_ICONS.maximize, action: 'maximize' },
-  { name: 'close', color: '#e63946', icon: CONTROL_ICONS.close, action: 'close' },
-  { name: 'fullscreen', color: '#6a4c93', icon: CONTROL_ICONS.fullscreen, action: 'toggle-fullscreen', fullWidth: true }
-];
-
 /**
  * 生成控制面板的主脚本
  * @param hiddenButtons 隐藏的按钮列表
@@ -32,12 +8,7 @@ const DEFAULT_BUTTON_CONFIGS: ButtonConfig[] = [
  */
 export function generateControlPanelScript(hiddenButtons: string[]): string {
   // 如果隐藏列表包含 'control'，则不生成任何控制面板
-  if (hiddenButtons.includes('control')) {
-    return `
-      // 控制面板已被隐藏
-      console.log('控制面板已通过 -hide=control 参数隐藏');
-    `;
-  }
+  if (hiddenButtons.includes('control')) return '';
   
   return getSimpleControlScript(hiddenButtons);
 }
@@ -219,7 +190,7 @@ function getSimpleControlScript(hiddenButtons: string[]): string {
     window.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'show-control-panel') {
         window.toggleControlPanel();
-      } else if (event.data && event.data.type === 'electron-control') {
+      } else if (event.source === window && event.data?.type === 'electron-control') {
         window.postMessage({
           type: 'electron-ipc-control',
           action: event.data.action

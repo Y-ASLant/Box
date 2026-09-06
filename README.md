@@ -28,21 +28,24 @@
 
 ### 环境准备
 
-首先，请确保您已安装 [Node.js](https://nodejs.org/) 和 `pnpm`（可通过 `corepack enable pnpm` 启用）。然后安装项目依赖：
+请使用 Node.js 22.12+ 和 pnpm 12.3.4（可通过 `corepack enable pnpm` 启用）：
 
 ```bash
 pnpm install
-```
-
-### 运行
-```bash
-pnpm run start
+pnpm start          # Electron 开发模式
+pnpm run check      # 检查 renderer、Electron、shared 和构建配置
+pnpm run build      # 检查并构建 renderer
 ```
 
 ### 打包命令
+
 ```bash
-pnpm run build:electron-fast
+pnpm run build:electron  # 检查并打包
+make build               # 同上
+make clean               # 清理 dist、dist-electron 和 build
 ```
+
+需要跳过类型检查时可使用 `pnpm run build:electron-fast`。
 
 您可以根据目标平台运行以下命令：
 

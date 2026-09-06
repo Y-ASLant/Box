@@ -93,7 +93,7 @@ body, html {
  * 禁用文本选择的样式
  * 用于防止用户选择文本的通用样式
  */
-export const disableTextSelectionCSS = `
+const disableTextSelectionCSS = `
 .disable-select {
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -127,7 +127,7 @@ export const disableTextSelectionCSS = `
  * 拖动区域样式
  * 用于窗口拖动的通用样式
  */
-export const dragRegionCSS = `
+const dragRegionCSS = `
 .drag-region {
   position: fixed;
   top: 0;
@@ -188,19 +188,6 @@ ${dragRegionCSS}
 `;
 
 /**
- * 控制面板样式工具类
- */
-export const controlPanelCSS = `
-.no-select {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  cursor: default;
-}
-`;
-
-/**
  * 隐藏鼠标光标样式
  * 完全隐藏鼠标光标
  */
@@ -228,5 +215,4 @@ a, button {
 export const baseWindowCSS = `
 ${disableTextSelectionCSS}
 ${dragRegionCSS}
-${customScrollbarCSS}
 `;

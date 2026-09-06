@@ -1,8 +1,8 @@
 .PHONY: build clean
 
-# 打包应用（vite 构建 + electron-builder，输出到 build/）
+# 类型检查、构建并打包应用，输出到 build/
 build:
-	pnpm run build:electron-fast
+	pnpm run build:electron
 
 # 清理构建产物
 clean:

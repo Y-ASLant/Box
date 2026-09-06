@@ -6,19 +6,25 @@
   "author": "ASlant <aslant2002@outlook.com>",
   "license": "MIT",
   "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=22.12.0",
+    "pnpm": ">=12.3.4"
+  },
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "start": "pnpm run electron:dev",
+    "electron:dev": "vite --config electron.vite.config.mjs",
+    "preview": "vite preview",
+    "check": "vue-tsc && pnpm run check:node",
+    "check:node": "tsc -p tsconfig.node.json",
+    "build": "pnpm run check && vite build",
     "build:no-check": "vite build",
-    "build:electron": "vue-tsc && vite build --config electron.vite.config.mjs && electron-builder",
+    "build:electron": "pnpm run check && vite build --config electron.vite.config.mjs && electron-builder",
     "build:electron-fast": "vite build --config electron.vite.config.mjs && electron-builder",
     "build:win": "pnpm run build:electron --win",
     "build:mac": "pnpm run build:electron --mac",
-    "build:linux": "pnpm run build:electron --linux",
-    "preview": "vite preview",
-    "electron:dev": "vite --config electron.vite.config.mjs",
-    "start": "pnpm run electron:dev"
+    "build:linux": "pnpm run build:electron --linux"
   },
   "dependencies": {
     "vue": "^3.5.42",
@@ -34,7 +40,6 @@
     "typescript": "^5.9.0",
     "vite": "^8.2.2",
     "vite-plugin-electron": "^1.1.2",
-    "vite-plugin-electron-renderer": "^1.0.0",
     "vue-tsc": "^3.3.11"
   },
   "build": {

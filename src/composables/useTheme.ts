@@ -1,117 +1,61 @@
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import { themes, type ThemeName } from './themes';
 
-// 全局主题状态
-const currentTheme = ref<ThemeName>('light');
+function getLocalTheme(): ThemeName {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme && savedTheme in themes) {
+    return savedTheme as ThemeName;
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+const currentTheme = ref<ThemeName>(getLocalTheme());
+let loadPromise: Promise<void> | null = null;
+
+function applyTheme(themeName: ThemeName) {
+  const theme = themes[themeName];
+  document.documentElement.setAttribute('data-theme', themeName);
+  for (const [property, value] of Object.entries(theme.cssVars)) {
+    document.documentElement.style.setProperty(property, value);
+  }
+}
+
+async function getConfiguredTheme(): Promise<ThemeName | null> {
+  if (window.electronAPI) {
+    try {
+      const config = await window.electronAPI.getAppConfig();
+      if (config.theme && config.theme in themes) {
+        return config.theme as ThemeName;
+      }
+    } catch (error) {
+      console.warn('无法获取应用配置:', error);
+    }
+  }
+
+  const theme = new URLSearchParams(window.location.search).get('theme');
+  return theme && theme in themes ? theme as ThemeName : null;
+}
+
+function loadThemePreference(): Promise<void> {
+  loadPromise ??= getConfiguredTheme().then((theme) => {
+    if (theme) {
+      currentTheme.value = theme;
+    }
+  });
+  return loadPromise;
+}
+
+watch(currentTheme, (theme) => {
+  applyTheme(theme);
+  localStorage.setItem('theme', theme);
+}, { immediate: true });
 
 export function useTheme() {
-  // 应用主题到 DOM
-  const applyTheme = (themeName: ThemeName) => {
-    const theme = themes[themeName];
-    if (!theme) return;
-
-    // 设置 data-theme 属性
-    document.documentElement.setAttribute('data-theme', themeName);
-    
-    // 应用 CSS 变量
-    Object.entries(theme.cssVars).forEach(([key, value]) => {
-      document.documentElement.style.setProperty(key, value);
-    });
-  };
-
-  // 从 Electron 配置获取主题设置
-  const getThemeFromConfig = async (): Promise<ThemeName | null> => {
-    // 在 Electron 环境中获取配置
-    if (window.electronAPI && window.electronAPI.getAppConfig) {
-      try {
-        const config = await window.electronAPI.getAppConfig();
-        if (config.theme && config.theme in themes) {
-          return config.theme as ThemeName;
-        }
-      } catch (error) {
-        console.warn('无法获取应用配置:', error);
-      }
-    }
-    
-    // 在浏览器环境中从 URL 参数获取
-    const urlParams = new URLSearchParams(window.location.search);
-    const themeParam = urlParams.get('theme');
-    if (themeParam && themeParam in themes) {
-      return themeParam as ThemeName;
-    }
-    
-    return null;
-  };
-
-  // 从 localStorage 加载主题偏好
-  const loadThemePreference = async () => {
-    // 优先级：Electron 配置（包含命令行参数） > localStorage > 系统偏好
-    
-    // 1. 检查 Electron 配置（包含命令行参数和配置文件）
-    const configTheme = await getThemeFromConfig();
-    if (configTheme) {
-      currentTheme.value = configTheme;
-      console.log(`使用配置指定的主题: ${configTheme}`);
-      return;
-    }
-    
-    // 2. 检查 localStorage
-    const saved = localStorage.getItem('theme');
-    if (saved && saved in themes) {
-      currentTheme.value = saved as ThemeName;
-      return;
-    }
-    
-    // 3. 使用系统主题偏好
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    currentTheme.value = prefersDark ? 'dark' : 'light';
-  };
-
-  // 保存主题偏好到 localStorage
-  const saveThemePreference = (themeName: ThemeName) => {
-    localStorage.setItem('theme', themeName);
-  };
-
-  // 切换主题
-  const toggleTheme = () => {
-    currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light';
-  };
-
-  // 设置特定主题
-  const setTheme = (themeName: ThemeName) => {
-    if (themeName in themes) {
-      currentTheme.value = themeName;
-    }
-  };
-
-  // 获取当前主题信息
-  const getCurrentTheme = () => themes[currentTheme.value];
-
-  // 检查是否为深色主题
-  const isDarkMode = () => currentTheme.value === 'dark';
-
-  // 监听主题变化
-  watch(currentTheme, (newTheme) => {
-    applyTheme(newTheme);
-    saveThemePreference(newTheme);
-  }, { immediate: true });
-
-  // 初始化
-  onMounted(() => {
-    loadThemePreference();
-  });
-
   return {
-    currentTheme: readonly(currentTheme),
-    toggleTheme,
-    setTheme,
-    getCurrentTheme,
-    isDarkMode,
+    toggleTheme() {
+      currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light';
+    },
+    isDarkMode: () => currentTheme.value === 'dark',
     loadThemePreference
   };
 }
-
-// 导出只读的当前主题状态，供其他组件使用
-export const readonly = <T>(ref: { value: T }) => ({
-  get value() { return ref.value; }
-});

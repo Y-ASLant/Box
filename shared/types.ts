@@ -20,10 +20,6 @@ export interface AppConfig {
   bg?: string;
   /** 主题设置：light | dark */
   theme?: string;
-  /** 自定义配置（前端扩展字段） */
-  customConfig?: string;
-  /** 其他动态配置字段 */
-  [key: string]: any;
 }
 
 /**
@@ -64,48 +60,6 @@ export interface ParsedConfig {
   bgPath: string | null;
 }
 
-/**
- * 控制按钮配置接口
- * 用于定义控制面板中的按钮
- */
-export interface ButtonConfig {
-  /** 按钮名称标识 */
-  name: string;
-  /** 按钮颜色 */
-  color: string;
-  /** 按钮图标SVG */
-  icon: string;
-  /** 按钮操作动作 */
-  action: string;
-  /** 是否全宽显示 */
-  fullWidth?: boolean;
-}
-
-/**
- * IPC 消息类型
- * 用于主进程和渲染进程之间的通信
- */
-export type IPCAction = 
-  | 'return-to-login'
-  | 'minimize'
-  | 'maximize' 
-  | 'close'
-  | 'toggle-fullscreen'
-  | 'navigate-to-url'
-  | 'clear-history-cache';
-
-/**
- * 窗口消息事件接口
- * 用于窗口间的消息传递
- */
-export interface WindowMessage {
-  /** 消息类型 */
-  type: 'electron-control' | 'electron-ipc-control' | 'show-control-panel' | 'toggle-control-panel';
-  /** 操作动作 */
-  action?: IPCAction;
-  /** 附加数据 */
-  data?: any;
-}
 
 /**
  * 错误页面属性接口

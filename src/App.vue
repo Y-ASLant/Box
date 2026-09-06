@@ -1,32 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import type { AppConfig } from '../shared/types';
 import ThemeToggle from './components/ThemeToggle.vue';
 import { useTheme } from './composables/useTheme';
 
-// 创建响应式配置对象
-const appConfig = ref<AppConfig>({});
-
-// 使用主题管理 composable
 const { loadThemePreference } = useTheme();
-
-// 在组件挂载时获取配置
-onMounted(async () => {
-  // 加载主题偏好
-  loadThemePreference();
-  
-  // 检查是否在Electron环境中
-  if (window.electronAPI) {
-    try {
-      // 从主进程获取配置
-      const config = await window.electronAPI.getAppConfig();
-      appConfig.value = config;
-      console.log('应用配置:', config);
-    } catch (error) {
-      console.error('获取配置出错:', error);
-    }
-  }
-});
+void loadThemePreference();
 
 // 阻止双击事件导致窗口最大化
 const handleDragRegionDoubleClick = (e: MouseEvent) => {

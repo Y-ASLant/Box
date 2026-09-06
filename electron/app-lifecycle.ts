@@ -1,7 +1,7 @@
 import { app, globalShortcut, session, protocol } from 'electron';
-import { loadConfigFile, parseAndMergeConfig } from './config';
+import { loadConfigFile, parseAndMergeConfig } from './app-config';
 import { createWindow, cleanupWindows, getMainWindow } from './window-manager';
-import { registerIPCHandlers, setSinglePageMode, updateDomReadyHandler, setParsedConfig } from './ipc-handlers';
+import { registerIPCHandlers } from './ipc-handlers';
 
 // 应用初始化
 export function initializeApp() {
@@ -49,22 +49,9 @@ function setupSession() {
 // 启动应用程序
 function startApplication() {
   // 首先加载配置文件
-  const appConfig = loadConfigFile();
-
-  // 解析命令行参数并合并配置
+  loadConfigFile();
   const config = parseAndMergeConfig(process.argv, app.isPackaged);
-  
-  // 设置单页模式
-  setSinglePageMode(config.isSinglePageMode);
-  
-  // 设置解析后的配置（包含主题信息）
-  setParsedConfig(config);
-  
-  // 注册IPC处理程序
-  registerIPCHandlers();
-  
-  // 更新DOM ready处理程序以传递隐藏按钮
-  updateDomReadyHandler(config.hiddenButtons);
+  registerIPCHandlers(config);
   
   // 创建主窗口
   createWindow({

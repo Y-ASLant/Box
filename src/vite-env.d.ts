@@ -1,46 +1,29 @@
 /// <reference types="vite/client" />
 
+import type { DefineComponent } from 'vue';
+import type { AppConfig } from '../shared/types';
+
 declare module '*.vue' {
-  import type { DefineComponent } from 'vue'
-  const component: DefineComponent<{}, {}, any>
-  export default component
+  const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>;
+  export default component;
 }
 
-// 定义配置接口
-interface AppConfig {
-  link?: string;
-  mode?: string;
-  window?: string;
-  page?: string;
-  hide?: string;
-  bg?: string;
-  theme?: string;
-  customConfig?: string;
-  [key: string]: any;
+declare global {
+  interface ElectronAPI {
+    navigateToUrl: (url: string) => Promise<boolean>;
+    returnToLogin: () => Promise<boolean>;
+    minimizeWindow: () => Promise<boolean>;
+    maximizeWindow: () => Promise<boolean>;
+    closeWindow: () => Promise<boolean>;
+    toggleFullscreen: () => Promise<boolean>;
+    getAppConfig: () => Promise<AppConfig>;
+    getBackgroundPath: () => Promise<string | null>;
+    clearHistoryAndCache: () => Promise<boolean>;
+  }
+
+  interface Window {
+    electronAPI?: ElectronAPI;
+  }
 }
 
-// 声明Electron API类型
-interface ElectronAPI {
-  navigateToUrl: (url: string) => Promise<boolean>;
-  returnToLogin: () => Promise<boolean>;
-  // 添加窗口控制函数类型
-  minimizeWindow: () => Promise<boolean>;
-  maximizeWindow: () => Promise<boolean>;
-  closeWindow: () => Promise<boolean>;
-  // 添加全屏切换函数类型
-  toggleFullscreen: () => Promise<boolean>;
-  // 添加拖动函数类型
-  startDrag: () => void;
-  // 添加获取应用配置函数类型
-  getAppConfig: () => Promise<AppConfig>;
-  // 添加获取背景图片路径函数类型
-  getBackgroundPath: () => Promise<string | undefined>;
-  // 添加清除历史和缓存函数类型
-  clearHistoryAndCache: () => Promise<boolean>;
-  // 添加获取命令行参数函数类型
-  getCommandLineArgs?: () => string[];
-}
-
-interface Window {
-  electronAPI: ElectronAPI;
-}
+export {};

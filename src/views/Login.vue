@@ -33,6 +33,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { normalizeHttpUrl } from '../../shared/url';
 
 const router = useRouter();
 const remoteUrl = ref('');
@@ -55,20 +56,26 @@ const backgroundStyle = computed(() => {
 onMounted(async () => {
   const savedUrls = localStorage.getItem('recentUrls');
   if (savedUrls) {
-    recentUrls.value = JSON.parse(savedUrls);
-  }
-  
-  // 如果在Electron环境中，获取背景图片设置
-  if (window.electronAPI) {
     try {
-      const bgPath = await window.electronAPI.getBackgroundPath();
-      if (bgPath) {
-        // 直接使用后端返回的URL
-        backgroundImage.value = bgPath;
+      const parsedUrls: unknown = JSON.parse(savedUrls);
+      if (Array.isArray(parsedUrls) && parsedUrls.every(url => typeof url === 'string')) {
+        recentUrls.value = parsedUrls.slice(0, 3);
+      } else {
+        localStorage.removeItem('recentUrls');
       }
-    } catch (error) {
-      console.error('获取背景图片设置出错:', error);
+    } catch {
+      localStorage.removeItem('recentUrls');
     }
+  }
+
+  if (!window.electronAPI) return;
+  try {
+    const bgPath = await window.electronAPI.getBackgroundPath();
+    if (bgPath) {
+      backgroundImage.value = bgPath;
+    }
+  } catch (error) {
+    console.error('获取背景图片设置出错:', error);
   }
 });
 
@@ -100,7 +107,7 @@ const isValidUrl = computed(() => {
 // 使用保存的URL连接
 const connectToSavedUrl = (url: string) => {
   remoteUrl.value = url;
-  connectToRemote();
+  void connectToRemote();
 };
 
 // 连接到远程URL
@@ -112,8 +119,6 @@ const connectToRemote = async () => {
 
   const url = remoteUrl.value.trim();
   
-  // 保存到最近访问的URL列表
-  saveUrlToRecent(url);
 
   try {
     errorMessage.value = '';
@@ -124,37 +129,36 @@ const connectToRemote = async () => {
       if (!result) {
         const message = '连接失败，请检查URL是否正确或目标设备是否在线。';
         errorMessage.value = message;
-        router.push({ name: 'ErrorPage', query: { message } });
+        await router.push({ name: 'ErrorPage', query: { message } });
+        return;
       }
+      saveUrlToRecent(url);
     } else {
-      // 如果在浏览器环境中运行，直接使用window.location
-      let fullUrl = url;
-      if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
-        fullUrl = 'http://' + fullUrl;
-      }
-      window.location.href = fullUrl;
+      saveUrlToRecent(url);
+      window.location.href = normalizeHttpUrl(url);
     }
   } catch (error) {
-    const err = error as Error;
-    const message = `连接错误: ${err.message}`;
+    const message = `连接错误: ${error instanceof Error ? error.message : String(error)}`;
     errorMessage.value = message;
-    console.error('连接错误:', err);
-    router.push({ name: 'ErrorPage', query: { message } });
+    console.error('连接错误:', error);
+    await router.push({ name: 'ErrorPage', query: { message } });
   }
 };
 
 // 清除历史记录和缓存
 const clearHistory = async () => {
-  // 不再进行二次确认，直接清除
-  if (window.electronAPI) {
-    await window.electronAPI.clearHistoryAndCache();
-    // 主进程会处理页面重载，但我们也可以在这里清空以获得即时反馈
+  try {
+    if (window.electronAPI) {
+      const cleared = await window.electronAPI.clearHistoryAndCache();
+      if (!cleared) {
+        throw new Error('主进程未能清除缓存');
+      }
+    }
     recentUrls.value = [];
     localStorage.removeItem('recentUrls');
-  } else {
-    // 浏览器环境下的回退
-    localStorage.removeItem('recentUrls');
-    recentUrls.value = [];
+  } catch (error) {
+    errorMessage.value = `清除失败: ${error instanceof Error ? error.message : String(error)}`;
+    console.error('清除历史和缓存失败:', error);
   }
 };
 </script>

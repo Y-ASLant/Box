@@ -1,14 +1,10 @@
 // 主题配置文件
-export interface ThemeConfig {
-  name: string;
-  displayName: string;
+interface ThemeConfig {
   cssVars: Record<string, string>;
 }
 
-export const themes: Record<string, ThemeConfig> = {
+export const themes = {
   light: {
-    name: 'light',
-    displayName: '浅色模式',
     cssVars: {
       '--bg-primary': '#ffffff',
       '--bg-secondary': '#f5f5f5',
@@ -31,8 +27,6 @@ export const themes: Record<string, ThemeConfig> = {
     }
   },
   dark: {
-    name: 'dark',
-    displayName: '深色模式',
     cssVars: {
       '--bg-primary': '#1a1a1a',
       '--bg-secondary': '#2d2d2d',
@@ -54,6 +48,6 @@ export const themes: Record<string, ThemeConfig> = {
       '--scrollbar-track': 'transparent'
     }
   }
-};
+} as const satisfies Record<string, ThemeConfig>;
 
 export type ThemeName = keyof typeof themes;

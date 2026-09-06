@@ -1,11 +1,24 @@
 {
   "compilerOptions": {
-    "skipLibCheck": true,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "noEmit": true
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true
   },
-  "include": ["vite.config.mts", "electron.vite.config.mjs", "electron/**/*.ts", "shared/**/*.ts", "shared/**/*.mts"]
+  "include": [
+    "electron.vite.config.mjs",
+    "vite.config.mts",
+    "vite.shared.mts",
+    "electron/**/*.ts",
+    "shared/**/*.ts"
+  ]
 }

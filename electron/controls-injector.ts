@@ -1,110 +1,66 @@
 import { BrowserWindow } from 'electron';
-import * as path from 'path';
-import * as fs from 'fs';
-import { customScrollbarCSS, hiddenScrollbarCSS, hiddenMouseCSS, disableTextSelectionCSS, dragRegionCSS, newWindowCSS, baseWindowCSS } from '../shared/styles';
+import { baseWindowCSS, customScrollbarCSS, hiddenMouseCSS, hiddenScrollbarCSS, newWindowCSS } from '../shared/styles';
 import { generateControlPanelScript } from '../shared/control-panel-generator';
-import type { ButtonConfig } from '../shared/types';
-
-// 重新导出样式，保持向后兼容
-export { customScrollbarCSS, hiddenScrollbarCSS, hiddenMouseCSS };
 
 // 注入控制脚本到webContents
-export function injectControlsScript(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
-  if (!targetWindow || targetWindow.isDestroyed()) return;
+export async function injectControlsScript(targetWindow: BrowserWindow, hiddenButtons: string[] = []): Promise<void> {
+  if (targetWindow.isDestroyed() || targetWindow.webContents.isDestroyed()) return;
 
   try {
-    const hiddenButtonsJSON = JSON.stringify(hiddenButtons);
-    
-    // 检查webContents是否存在且未销毁
-    if (!targetWindow.webContents || targetWindow.webContents.isDestroyed()) {
-      console.error('无法注入控制脚本：webContents不存在或已销毁');
+    const domReady = await targetWindow.webContents.executeJavaScript('Boolean(document?.body)');
+    if (!domReady) {
+      console.error('无法注入控制脚本：DOM未准备好');
       return;
     }
-
-    // 检查DOM是否已加载
-    targetWindow.webContents.executeJavaScript(`
-      !!document && !!document.body
-    `).then(domReady => {
-      if (!domReady) {
-        console.error('无法注入控制脚本：DOM未准备好');
-        return;
-      }
-      
-      // DOM已准备好，安全地注入控制脚本
-      targetWindow.webContents.executeJavaScript(generateControlPanelScript(hiddenButtons))
-        .catch(error => {
-          console.error('注入控制脚本时出错:', error);
-        });
-    }).catch(error => {
-      console.error('检查DOM准备情况时出错:', error);
-    });
+    const script = generateControlPanelScript(hiddenButtons);
+    if (!script) return;
+    await targetWindow.webContents.executeJavaScript(script);
   } catch (error) {
-    console.error('注入控制脚本过程中发生异常:', error);
+    console.error('注入控制脚本时出错:', error);
   }
-}
-
-// 隐藏控制面板的通用函数
-export function hideControlPanel(targetWindow: BrowserWindow) {
-  if (!targetWindow || targetWindow.isDestroyed()) return;
-  
-  targetWindow.webContents.executeJavaScript(`
-    if (window.hideControlPanel) {
-      window.hideControlPanel();
-    }
-  `).catch(() => {
-    // 忽略错误
-  });
 }
 
 // 注入基础样式和拖动区域
 export function injectBaseStyles(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
-  if (!targetWindow || targetWindow.isDestroyed()) return;
+  if (targetWindow.isDestroyed()) return;
 
-  // 注入基础样式
-  targetWindow.webContents.insertCSS(baseWindowCSS).catch(e => console.error('插入CSS错误:', e));
-
-  // 根据隐藏参数决定使用哪种滚动条样式
   const scrollbarCSS = hiddenButtons.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
-  targetWindow.webContents.insertCSS(scrollbarCSS).catch(e => console.error('插入滚动条CSS错误:', e));
+  targetWindow.webContents.insertCSS(baseWindowCSS).catch(error => console.error('插入基础CSS错误:', error));
+  targetWindow.webContents.insertCSS(scrollbarCSS).catch(error => console.error('插入滚动条CSS错误:', error));
 
-  // 根据隐藏参数决定是否隐藏鼠标光标
   if (hiddenButtons.includes('mouse')) {
-    targetWindow.webContents.insertCSS(hiddenMouseCSS).catch(e => console.error('插入隐藏鼠标CSS错误:', e));
+    targetWindow.webContents.insertCSS(hiddenMouseCSS).catch(error => console.error('插入隐藏鼠标CSS错误:', error));
   }
 
-  // 将disable-select类添加到body并创建拖动区域
   targetWindow.webContents.executeJavaScript(`
     document.body.classList.add('disable-select');
-
-    // 创建拖动区域
     if (!document.querySelector('.drag-region')) {
       const dragRegion = document.createElement('div');
       dragRegion.className = 'drag-region';
       document.body.appendChild(dragRegion);
     }
-
-    // 禁用整个文档的双击最大化功能
-    document.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
+    document.addEventListener('dblclick', (event) => {
+      event.stopPropagation();
     }, true);
-  `).catch(e => console.error('执行JavaScript错误:', e));
+  `).catch(error => console.error('注入基础行为错误:', error));
 }
 
 // 为新窗口注入样式（包含更严格的文本选择禁用）
 export function injectNewWindowStyles(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
-  if (!targetWindow || targetWindow.isDestroyed()) return;
+  if (targetWindow.isDestroyed()) return;
 
-  targetWindow.webContents.insertCSS(newWindowCSS).catch(e => console.error('插入CSS错误:', e));
+  const scrollbarCSS = hiddenButtons.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
+  targetWindow.webContents.insertCSS(newWindowCSS).catch(error => console.error('插入新窗口CSS错误:', error));
+  targetWindow.webContents.insertCSS(scrollbarCSS).catch(error => console.error('插入滚动条CSS错误:', error));
 
-  // 根据隐藏参数决定是否隐藏鼠标光标
   if (hiddenButtons.includes('mouse')) {
-    targetWindow.webContents.insertCSS(hiddenMouseCSS).catch(e => console.error('插入隐藏鼠标CSS错误:', e));
+    targetWindow.webContents.insertCSS(hiddenMouseCSS).catch(error => console.error('插入隐藏鼠标CSS错误:', error));
   }
 }
 
 // 为新窗口注入JavaScript行为
 export function injectNewWindowBehaviors(targetWindow: BrowserWindow) {
-  if (!targetWindow || targetWindow.isDestroyed()) return;
+  if (targetWindow.isDestroyed()) return;
 
   targetWindow.webContents.executeJavaScript(`
     // 添加拖动区域
@@ -171,66 +127,3 @@ export function injectNewWindowBehaviors(targetWindow: BrowserWindow) {
     
   `).catch(e => console.error('执行JavaScript错误:', e));
 }
-
-// 创建控制按钮HTML内容（保留用于悬浮控制窗口）
-function createControlsHTML(): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Controls</title>
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-          background-color: rgba(0, 0, 0, 0.6);
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        .controls {
-          display: flex;
-          padding: 10px;
-          gap: 10px;
-          justify-content: center;
-        }
-        .control-btn {
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          border: none;
-          cursor: pointer;
-          position: relative;
-        }
-        .back-btn { background-color: #4a90e2; }
-        .minimize-btn { background-color: #ffbd44; }
-        .maximize-btn { background-color: #00ca56; }
-        .close-btn { background-color: #ff605c; }
-      </style>
-    </head>
-    <body>
-      <div class="controls">
-        <button class="control-btn back-btn" id="back"></button>
-        <button class="control-btn minimize-btn" id="minimize"></button>
-        <button class="control-btn maximize-btn" id="maximize"></button>
-        <button class="control-btn close-btn" id="close"></button>
-      </div>
-      <script>
-        const back = document.getElementById('back');
-        const minimize = document.getElementById('minimize');
-        const maximize = document.getElementById('maximize');
-        const close = document.getElementById('close');
-
-        if (window.electronAPI) {
-          back.addEventListener('click', () => window.electronAPI.returnToLogin());
-          minimize.addEventListener('click', () => window.electronAPI.minimizeWindow());
-          maximize.addEventListener('click', () => window.electronAPI.maximizeWindow());
-          close.addEventListener('click', () => window.electronAPI.closeWindow());
-        }
-      </script>
-    </body>
-    </html>
-  `;
-}
-
-

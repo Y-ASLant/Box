@@ -1,51 +1,42 @@
 # Logs
 logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
 # Dependencies
 node_modules
 .pnpm-store
 
-# Build outputs
+# Generated outputs
 dist
-dist-ssr
 dist-electron
-dist-electron/*
 build
+
+# Local configuration
+config.json
+.env
+.env.*
 *.local
 
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Editor directories and files
+# Editors
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-# OS generated files
+
+# Operating systems
 Thumbs.db
 .DS_Store
-.DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
 
-# Archive files
+# Archives
 *.7z
 *.zip
 *.rar
@@ -56,7 +47,3 @@ ehthumbs.db
 *.temp
 *.swp
 *.swo
-
-# Electron specific
-app/dist
-release-builds
