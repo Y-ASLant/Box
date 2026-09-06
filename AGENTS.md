@@ -39,7 +39,7 @@ pnpm build             # full checks + renderer bundle
 pnpm build:electron    # full checks + Electron bundle/package
 pnpm build:electron-fast  # package without type checks
 pnpm build:win         # checked Windows package; mac/linux variants also exist
-make build             # checked Electron package
+make build             # checked package; keeps only release files under build/
 make clean             # deletes generated outputs, caches, logs, and temporary files
 make clear             # compatibility alias for make clean
 make distclean         # make clean plus node_modules/ and repo-local .pnpm-store/
@@ -82,6 +82,7 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - Keep renderer asset paths relative (`base: './'`) for packaged `file://` loading. `@` resolves to `src/`.
 - Production renderer builds use Terser and drop `console`/`debugger`; do not rely on them for packaged diagnostics.
 - electron-builder packages only `dist/**/*`, `dist-electron/**/*`, and the runtime `assets/index.ico`; README screenshots and source-only icons stay outside `app.asar`. Vue and Vue Router remain dev dependencies because Vite fully bundles them and packaged runtime `node_modules` is intentionally empty. Windows uses x64 NSIS; macOS uses DMG; Linux uses AppImage/deb/rpm for x64 and arm64.
+- `make build` removes `dist/`, `dist-electron/`, unpacked staging directories, builder diagnostics, and updater metadata only after packaging succeeds. Use `pnpm build:electron` when those intermediates are needed for debugging or runtime smoke checks.
 - Supported runtime flags include `-link`, `-mode`, `-window`, `-page`, `-theme`, `-hide`, and `-bg`; hide values are comma-separated.
 
 ## Testing & QA

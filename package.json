@@ -20,8 +20,8 @@
     "check:node": "tsc -p tsconfig.node.json",
     "build": "pnpm run check && vite build",
     "build:no-check": "vite build",
-    "build:electron": "pnpm run check && vite build --config electron.vite.config.mjs && electron-builder",
-    "build:electron-fast": "vite build --config electron.vite.config.mjs && electron-builder",
+    "build:electron": "pnpm run check && vite build --config electron.vite.config.mjs && electron-builder --publish never",
+    "build:electron-fast": "vite build --config electron.vite.config.mjs && electron-builder --publish never",
     "build:win": "pnpm run build:electron --win",
     "build:mac": "pnpm run build:electron --mac",
     "build:linux": "pnpm run build:electron --linux"
@@ -76,7 +76,8 @@
       "deleteAppDataOnUninstall": true,
       "installerIcon": "./assets/index.ico",
       "uninstallerIcon": "./assets/index.ico",
-      "installerHeaderIcon": "./assets/index.ico"
+      "installerHeaderIcon": "./assets/index.ico",
+      "differentialPackage": false
     },
     "mac": {
       "target": "dmg",

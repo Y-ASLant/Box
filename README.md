@@ -40,11 +40,13 @@ pnpm run build      # 检查并构建 renderer
 ### 打包命令
 
 ```bash
-pnpm run build:electron  # 检查并打包
-make build               # 同上
+pnpm run build:electron  # 检查并打包，保留中间目录便于调试
+make build               # 检查并打包，仅保留 build/ 中的发布文件
 make clean               # 清理构建产物、缓存、日志和临时文件
 make distclean           # 在 clean 基础上删除 node_modules 和本地 pnpm store
 ```
+
+`dist/`、`dist-electron/` 和 `build/*-unpacked/` 是打包过程使用的中间目录。`make build` 仅在打包成功后删除这些目录；构建失败时会保留现场便于排查。
 
 需要跳过类型检查时可使用 `pnpm run build:electron-fast`。
 
