@@ -81,7 +81,7 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - Vite configs are native-ESM-compatible (`.mts`/`.mjs`). Keep explicit extensions for local ESM imports and use `import.meta.dirname`, not `__dirname`.
 - Keep renderer asset paths relative (`base: './'`) for packaged `file://` loading. `@` resolves to `src/`.
 - Production renderer builds use Terser and drop `console`/`debugger`; do not rely on them for packaged diagnostics.
-- electron-builder packages `dist/**/*`, `dist-electron/**/*`, and `assets/**/*` into `build/`. Windows uses x64 NSIS; macOS uses DMG; Linux uses AppImage/deb/rpm for x64 and arm64.
+- electron-builder packages only `dist/**/*`, `dist-electron/**/*`, and the runtime `assets/index.ico`; README screenshots and source-only icons stay outside `app.asar`. Vue and Vue Router remain dev dependencies because Vite fully bundles them and packaged runtime `node_modules` is intentionally empty. Windows uses x64 NSIS; macOS uses DMG; Linux uses AppImage/deb/rpm for x64 and arm64.
 - Supported runtime flags include `-link`, `-mode`, `-window`, `-page`, `-theme`, `-hide`, and `-bg`; hide values are comma-separated.
 
 ## Testing & QA
