@@ -1,7 +1,7 @@
 <template>
   <div class="error-page">
     <div class="error-content">
-      <p>{{ message || '访问错误，网络连接错误或访问服务器不在线' }}</p>
+      <p>{{ message || '页面加载失败，请检查地址、网络或目标服务状态' }}</p>
       <button @click="handleAction">{{ isSubWindow ? '关闭窗口' : '返回主页' }}</button>
     </div>
   </div>

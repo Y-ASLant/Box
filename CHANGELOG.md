@@ -23,6 +23,7 @@
 
 ### 变更
 
+- 产品重新定位为面向 Web 应用、内网系统和展示终端的宽松兼容浏览器，并统一相关界面与文档文案。
 - 重构主进程、预加载、IPC、窗口管理与远程页面控件注入边界。
 - 迁移至 pnpm，并更新 Electron、Vue、Vite、TypeScript 和构建工具链。
 - 精简打包资源与清理流程，发布文件名现在包含平台和架构。
@@ -64,6 +65,7 @@ This file records changes to Box (Browser Plus). Its format follows [Keep a Chan
 
 ### Changed
 
+- Repositioned the product as a permissive compatibility browser for Web applications, intranet systems, and display terminals, with matching UI and documentation copy.
 - Refactored the main process, preload, IPC, window management, and remote-page control injection boundaries.
 - Migrated to pnpm and updated Electron, Vue, Vite, TypeScript, and the build toolchain.
 - Simplified packaged resources and cleanup, with platform and architecture in release filenames.

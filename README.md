@@ -3,12 +3,27 @@
 [![CI](https://github.com/Y-ASLant/Box/actions/workflows/ci.yml/badge.svg)](https://github.com/Y-ASLant/Box/actions/workflows/ci.yml)
 [![Release](https://github.com/Y-ASLant/Box/actions/workflows/release.yml/badge.svg)](https://github.com/Y-ASLant/Box/actions/workflows/release.yml)
 
-Box 是一个面向演示、展厅和固定终端场景的无边框 Electron 浏览器。应用可从本地登录页输入地址，也可通过配置直接加载 HTTP(S) 页面，并为页面提供悬浮窗口控制面板。
+Box 是一个兼容性优先的宽松 Electron 浏览器，面向 Web 应用、内网系统、设备管理页面、大屏展示和固定终端。它可以直接打开 HTTP(S) 地址、域名或 IP，并为加载的页面提供无边框窗口和悬浮控制面板。
 
 ![应用界面](assets/demo.png)
 
+## 产品定位
+
+Box 不是面向公共互联网的通用浏览器，也不是安全隔离容器。它优先解决受控环境中“页面能打开、Web 程序能运行、窗口便于展示和管理”的需求，适合：
+
+- 运行浏览器承载的 Web 程序、后台系统和业务工具
+- 访问局域网、专网、本机服务、IP 地址和设备管理页面
+- 展示数据看板、信息大屏、展厅内容和固定终端页面
+- 兼容使用自签名证书、宽松同源策略或特殊 CSP 的受信任旧系统
+- 通过配置文件和启动参数快速部署单页、全屏、置顶等运行模式
+
+“宽松”表示 Box 主动忽略证书错误、关闭 Electron Web Security，并为页面设置宽松 CSP，以减少 Chromium 默认安全策略对受控 Web 程序的限制。它不会绕过服务器登录、网络 ACL、VPN、防火墙、操作系统权限，也不保证所有要求安全上下文的 Web API 都能在普通 HTTP 页面运行。
+
 ## 功能
 
+- HTTP(S)、域名、IP 和本机/内网 Web 服务访问
+- 自签名或异常证书页面兼容
+- 宽松同源与 CSP 策略，适配受信任 Web 程序
 - 无边框主窗口和悬浮控制面板
 - 全屏、置顶和单页运行模式
 - 主窗口与受管子窗口
@@ -18,7 +33,7 @@ Box 是一个面向演示、展厅和固定终端场景的无边框 Electron 浏
 - URL 加载失败时显示本地错误页
 
 > [!IMPORTANT]
-> Box 面向受控展示环境，并默认信任加载的远程页面。应用会忽略证书错误、关闭 Electron Web Security、放宽 CSP，并向远程页面注入窗口控制能力。不要用它浏览不可信网站，也不要把这些 UI 限制视为安全边界。
+> Box 面向受控环境，并默认信任加载的页面。应用会忽略证书错误、关闭 Electron Web Security、放宽 CSP，并向页面注入窗口控制能力。请只加载可信的 Web 应用或内网服务，不要用它浏览未知网站，也不要把快捷键、右键菜单或开发者工具限制视为安全边界。
 
 ## 环境要求
 
@@ -121,7 +136,7 @@ git push origin v1.0.0
 | `page` | `-page=<type>` | `single`、`multi` | 单页模式下主页按钮打开用户目录 |
 | `theme` | `-theme=<theme>` | `light`、`dark` | 本地页面主题 |
 | `hide` | `-hide=<items>` | 见下表 | 逗号分隔的隐藏项 |
-| `bg` | `-bg=<path>` | 本地文件路径 | 登录页背景图片；相对路径基于当前工作目录 |
+| `bg` | `-bg=<path>` | 本地文件路径 | 启动页背景图片；相对路径基于当前工作目录 |
 
 无效的配置类型、枚举值和隐藏项会被忽略，并在主进程日志中说明原因。
 
@@ -154,7 +169,7 @@ pnpm start -link=https://example.com -theme=dark -hide=scroll
 ## 项目结构
 
 ```text
-src/       Vue 本地登录页、错误页、路由和主题
+src/       Vue 本地启动页、错误页、路由和主题
 electron/  Electron 主进程、预加载、IPC、窗口和会话策略
 shared/    跨进程类型、URL 处理、注入脚本和样式
 assets/    应用图标和文档截图

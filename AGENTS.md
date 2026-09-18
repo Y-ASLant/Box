@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Box（浏览器Plus）is a frameless Electron browser shell for presentation and kiosk-like use. It shows a local Vue login/error UI or loads a configured remote HTTP(S) page, then injects window controls and presentation-specific behavior into that page.
+Box（浏览器Plus）is a compatibility-first, permissive Electron browser for trusted Web applications, intranet systems, device pages, digital signage, and kiosk-like use. It shows a local Vue launch/error UI or loads a configured HTTP(S) page, then injects window controls and application/display behavior into that page.
 
 Treat Electron security behavior as load-bearing. The app intentionally disables certificate checks/web security, relaxes CSP, and injects JavaScript into remote content. UI restrictions such as blocked shortcuts and DevTools are not security boundaries.
 
@@ -60,7 +60,7 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - Reuse functional seams: explicit parameters such as `BrowserWindow`/`hiddenButtons`, module getters, and guard clauses. There is no DI container, class service layer, Pinia/Vuex store, or second state system.
 - Before window operations, check null/destroyed state. Use `async`/`await` with `try/catch` for user-visible operations; use Promise `.catch(...)` for fire-and-observe Electron calls. Log unexpected injection, configuration, and session failures; swallow only documented non-critical failures.
 - For new IPC behavior, expose a fixed preload method rather than raw `ipcRenderer`, add types to `src/vite-env.d.ts` or `shared/types.ts`, validate inputs/senders, and preserve context isolation.
-- For behavior shared by main and child windows, extend `setupCommonWindowEvents`; keep role-specific logic in the existing main/child helpers. Put injected presentation changes in `shared/styles.ts` or `shared/control-panel-generator.ts`.
+- For behavior shared by main and child windows, extend `setupCommonWindowEvents`; keep role-specific logic in the existing main/child helpers. Put injected Web application/display changes in `shared/styles.ts` or `shared/control-panel-generator.ts`.
 - Comments and user-facing messages are predominantly Simplified Chinese. Preserve that convention for UI/docs unless intentionally changing project language.
 
 ## Important Files

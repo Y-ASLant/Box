@@ -1,9 +1,9 @@
 <template>
   <div class="login-container" :style="backgroundStyle">
     <div class="login-box">
-      <h1>登录</h1>
+      <h1>打开 Web 应用</h1>
       <div class="input-group">
-        <label for="remote-url">输入IP地址或域名</label>
+        <label for="remote-url">输入网址、IP 地址或域名</label>
         <input 
           id="remote-url" 
           v-model="remoteUrl" 
@@ -12,12 +12,12 @@
           @keyup.enter="connectToRemote"
         />
       </div>
-      <button @click="connectToRemote" :disabled="!isValidUrl">连接</button>
+      <button @click="connectToRemote" :disabled="!isValidUrl">访问</button>
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
       
       <div v-if="recentUrls.length > 0" class="recent-urls">
         <h3 @click="clearHistory">
-          最近连接
+          最近访问
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="clear-icon"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
         </h3>
         <ul>
@@ -113,7 +113,7 @@ const connectToSavedUrl = (url: string) => {
 // 连接到远程URL
 const connectToRemote = async () => {
   if (!isValidUrl.value) {
-    errorMessage.value = '请输入有效的IP地址或域名';
+    errorMessage.value = '请输入有效的网址、IP 地址或域名';
     return;
   }
 
@@ -127,7 +127,7 @@ const connectToRemote = async () => {
       // 使用Electron的API导航到URL
       const result = await window.electronAPI.navigateToUrl(url);
       if (!result) {
-        const message = '连接失败，请检查URL是否正确或目标设备是否在线。';
+        const message = '页面加载失败，请检查地址、网络或目标服务状态。';
         errorMessage.value = message;
         await router.push({ name: 'ErrorPage', query: { message } });
         return;
@@ -138,9 +138,9 @@ const connectToRemote = async () => {
       window.location.href = normalizeHttpUrl(url);
     }
   } catch (error) {
-    const message = `连接错误: ${error instanceof Error ? error.message : String(error)}`;
+    const message = `访问错误: ${error instanceof Error ? error.message : String(error)}`;
     errorMessage.value = message;
-    console.error('连接错误:', error);
+    console.error('访问错误:', error);
     await router.push({ name: 'ErrorPage', query: { message } });
   }
 };
@@ -191,7 +191,7 @@ const clearHistory = async () => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.8; /* 稍微透明以确保登录框可见 */
+  opacity: 0.8; /* 稍微透明以确保启动卡片可见 */
   z-index: -1;
 }
 

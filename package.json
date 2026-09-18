@@ -2,7 +2,7 @@
   "name": "box",
   "private": true,
   "version": "1.0.0",
-  "description": "一个专用于 Web 演示的 Electron 应用",
+  "description": "面向 Web 应用、内网系统和展示终端的宽松 Electron 浏览器",
   "author": "ASlant <aslant2002@outlook.com>",
   "license": "MIT",
   "packageManager": "pnpm@12.4.2",
@@ -98,7 +98,7 @@
       "maintainer": "ASlant <aslant2002@outlook.com>",
       "vendor": "ASlant",
       "synopsis": "Box",
-      "description": "一个专用于 Web 演示的 Electron 应用。"
+      "description": "面向 Web 应用、内网系统和展示终端的宽松 Electron 浏览器。"
     }
   }
 }
