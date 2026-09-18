@@ -17,6 +17,7 @@
 ### 新增
 
 - 新增由 SemVer 标签触发的 GitHub Actions 发布流程。
+- 新增 main/PR 自动检查和手动五平台打包测试工作流。
 - 新增 Windows x64、macOS x64/arm64 和 Linux x64/arm64 原生构建。
 - 新增配置值校验、URL 规范化和统一的本地错误页回退。
 
@@ -57,6 +58,7 @@ This file records changes to Box (Browser Plus). Its format follows [Keep a Chan
 ### Added
 
 - Added a SemVer tag-triggered GitHub Actions release workflow.
+- Added automatic checks for main/PR changes and a manual five-platform packaging test workflow.
 - Added native builds for Windows x64, macOS x64/arm64, and Linux x64/arm64.
 - Added configuration validation, URL normalization, and a consistent local error-page fallback.
 

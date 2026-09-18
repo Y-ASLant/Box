@@ -1,5 +1,6 @@
 # Box（浏览器 Plus）
 
+[![CI](https://github.com/Y-ASLant/Box/actions/workflows/ci.yml/badge.svg)](https://github.com/Y-ASLant/Box/actions/workflows/ci.yml)
 [![Release](https://github.com/Y-ASLant/Box/actions/workflows/release.yml/badge.svg)](https://github.com/Y-ASLant/Box/actions/workflows/release.yml)
 
 Box 是一个面向演示、展厅和固定终端场景的无边框 Electron 浏览器。应用可从本地登录页输入地址，也可通过配置直接加载 HTTP(S) 页面，并为页面提供悬浮窗口控制面板。
@@ -41,7 +42,7 @@ pnpm build        # 类型检查并构建 renderer
 
 `pnpm start` 和 Electron 打包命令会按需准备当前平台的 Electron 运行时，首次执行需要联网下载。
 
-项目当前没有自动化测试、lint 或格式化命令，`pnpm check` 是提交前的静态检查入口。
+项目当前没有单元测试框架以及 lint、格式化命令，`pnpm check` 是提交前和 CI 使用的静态检查入口。
 
 ## 打包
 
@@ -63,6 +64,14 @@ make distclean   # clean 后继续删除 node_modules 和仓库内 pnpm store
 ```
 
 `dist/`、`dist-electron/` 和解包目录是生成内容，不应手动编辑。
+
+### GitHub Actions 测试
+
+- [CI](.github/workflows/ci.yml) 在推送到 `main`、Pull Request 和手动运行时检查所有工作流、changelog、TypeScript，并构建 renderer。
+- [Package Test](.github/workflows/package-test.yml) 仅支持手动运行，会在与正式发布相同的五种平台/架构环境中完整打包，并保留产物 7 天。
+- Package Test 不会创建 GitHub Release，适合在推送版本标签前验证安装包。
+
+在仓库的 **Actions → Package Test → Run workflow** 中选择需要测试的分支即可启动完整打包。
 
 ## 发布
 

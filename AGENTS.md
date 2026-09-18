@@ -66,6 +66,8 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 ## Important Files
 
 - `package.json` — scripts, direct dependencies, Electron entry, and electron-builder configuration.
+- `.github/workflows/ci.yml` — push/PR/manual workflow and application validation.
+- `.github/workflows/package-test.yml` — manual five-platform packaging without publishing a release.
 - `.github/workflows/release.yml` — tag validation, five native package jobs, artifact collection, and GitHub Release publication.
 - `CHANGELOG.md` — bilingual Keep a Changelog release history used verbatim for GitHub Release notes.
 - `scripts/extract-release-notes.mjs` — validates tag/package versions and extracts matching changelog sections.
@@ -93,10 +95,11 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 
 ## Testing & QA
 
-- There is no automated test suite, test framework, linter, formatter, or coverage setup. The release workflow provides static/build/package gates but does not replace manual runtime testing.
+- There is no automated test suite, test framework, linter, formatter, or coverage setup. CI validates workflows, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
 - `pnpm check` is the repository-wide static gate: `vue-tsc` checks `src/**/*`, then `tsc -p tsconfig.node.json` checks Electron, shared code, and Vite configs.
 - For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include URL navigation/load failure, main versus child windows, theme/config precedence, hidden controls, cache/history clearing, fullscreen/top/single-page behavior, custom backgrounds, and `Ctrl + Shift + Alt` control-panel toggling.
 - For packaging changes, use the checked `pnpm build:electron` or the relevant platform script and verify the expected files under `build/`.
+- Before moving a release tag, run Package Test manually from GitHub Actions when packaging or dependency behavior has changed.
 - If adding tests, cover observable boundaries such as IPC validation, configuration precedence, URL normalization, theme persistence, and load-error routing. Introducing a runner/config is a new project-wide convention; keep it minimal and document the command.
 
 ## Release & Changelog Conventions
