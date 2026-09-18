@@ -25,7 +25,16 @@ export const themes = {
       '--shadow-medium': 'rgba(0, 0, 0, 0.25)',
       '--backdrop-blur': 'rgba(255, 255, 255, 0.95)',
       '--scrollbar-thumb': '#c1c1c1',
-      '--scrollbar-track': 'transparent'
+      '--scrollbar-track': 'transparent',
+      '--chrome-bg': '#ffffff',
+      '--tab-strip-bg': '#e9ecf2',
+      '--chrome-border': '#dfe3eb',
+      '--chrome-text': '#202431',
+      '--chrome-muted': '#677083',
+      '--chrome-placeholder': '#8f98aa',
+      '--tab-hover': 'rgba(255, 255, 255, 0.58)',
+      '--control-hover': '#eef1f6',
+      '--address-bg': '#f1f3f7'
     }
   },
   dark: {
@@ -47,7 +56,16 @@ export const themes = {
       '--shadow-medium': 'rgba(0, 0, 0, 0.5)',
       '--backdrop-blur': 'rgba(26, 26, 26, 0.95)',
       '--scrollbar-thumb': '#555555',
-      '--scrollbar-track': 'transparent'
+      '--scrollbar-track': 'transparent',
+      '--chrome-bg': '#242730',
+      '--tab-strip-bg': '#181b22',
+      '--chrome-border': '#353a46',
+      '--chrome-text': '#f2f4f8',
+      '--chrome-muted': '#a3aaba',
+      '--chrome-placeholder': '#858d9d',
+      '--tab-hover': 'rgba(255, 255, 255, 0.06)',
+      '--control-hover': '#343945',
+      '--address-bg': '#191c23'
     }
   }
 } as const satisfies Record<ThemeName, ThemeConfig>;

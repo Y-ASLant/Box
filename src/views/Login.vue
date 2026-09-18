@@ -1,333 +1,242 @@
-<template>
-  <div class="login-container" :style="backgroundStyle">
-    <div class="login-box">
-      <h1>打开 Web 应用</h1>
-      <div class="input-group">
-        <label for="remote-url">输入网址、IP 地址或域名</label>
-        <input 
-          id="remote-url" 
-          v-model="remoteUrl" 
-          type="text" 
-          placeholder="例如: 192.168.1.1 或 example.com"
-          @keyup.enter="connectToRemote"
-        />
-      </div>
-      <button @click="connectToRemote" :disabled="!isValidUrl">访问</button>
-      <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
-      
-      <div v-if="recentUrls.length > 0" class="recent-urls">
-        <h3 @click="clearHistory">
-          最近访问
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="clear-icon"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-        </h3>
-        <ul>
-          <li v-for="(url, index) in recentUrls" :key="index" @click="connectToSavedUrl(url)">
-            <span>{{ url }}</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, onMounted, ref } from 'vue';
 import { normalizeHttpUrl } from '../../shared/url.mts';
 
-const router = useRouter();
+const emit = defineEmits<{ navigate: [url: string] }>();
 const remoteUrl = ref('');
 const errorMessage = ref('');
 const recentUrls = ref<string[]>([]);
 const backgroundImage = ref('');
 
-// 计算背景样式
-const backgroundStyle = computed(() => {
-  if (backgroundImage.value) {
-    return {
-      '--bg-image': `url("${backgroundImage.value}")`,
-      backgroundImage: `url("${backgroundImage.value}")`
-    };
-  }
-  return {};
-});
+const backgroundStyle = computed(() => backgroundImage.value
+  ? { '--new-tab-image': `url("${backgroundImage.value}")` }
+  : {});
 
-// 加载最近的URL和背景图片
 onMounted(async () => {
   const savedUrls = localStorage.getItem('recentUrls');
   if (savedUrls) {
     try {
       const parsedUrls: unknown = JSON.parse(savedUrls);
       if (Array.isArray(parsedUrls) && parsedUrls.every(url => typeof url === 'string')) {
-        recentUrls.value = parsedUrls.slice(0, 3);
-      } else {
-        localStorage.removeItem('recentUrls');
+        recentUrls.value = parsedUrls.slice(0, 6);
       }
     } catch {
       localStorage.removeItem('recentUrls');
     }
   }
 
-  if (!window.electronAPI) return;
-  try {
-    const bgPath = await window.electronAPI.getBackgroundPath();
-    if (bgPath) {
-      backgroundImage.value = bgPath;
-    }
-  } catch (error) {
-    console.error('获取背景图片设置出错:', error);
+  if (window.electronAPI) {
+    backgroundImage.value = await window.electronAPI.getBackgroundPath() ?? '';
   }
 });
 
-// 保存URL到最近列表
-const saveUrlToRecent = (url: string) => {
-  // 如果URL已经在列表中，将其移到顶部
-  const urlIndex = recentUrls.value.indexOf(url);
-  if (urlIndex > -1) {
-    recentUrls.value.splice(urlIndex, 1);
-  }
-  
-  // 添加URL到列表顶部
-  recentUrls.value.unshift(url);
-  
-  // 保持列表不超过3个项目
-  if (recentUrls.value.length > 3) {
-    recentUrls.value = recentUrls.value.slice(0, 3);
-  }
-  
-  // 保存到本地存储
+const saveUrl = (url: string) => {
+  recentUrls.value = [url, ...recentUrls.value.filter(item => item !== url)].slice(0, 6);
   localStorage.setItem('recentUrls', JSON.stringify(recentUrls.value));
 };
 
-// 简单验证输入的URL
-const isValidUrl = computed(() => {
-  return remoteUrl.value.trim() !== '';
-});
-
-// 使用保存的URL连接
-const connectToSavedUrl = (url: string) => {
-  remoteUrl.value = url;
-  void connectToRemote();
-};
-
-// 连接到远程URL
-const connectToRemote = async () => {
-  if (!isValidUrl.value) {
-    errorMessage.value = '请输入有效的网址、IP 地址或域名';
+const openUrl = (value = remoteUrl.value) => {
+  const input = value.trim();
+  if (!input) {
+    errorMessage.value = '请输入网址、IP 地址或域名';
     return;
   }
-
-  const url = remoteUrl.value.trim();
-  
-
   try {
+    const url = normalizeHttpUrl(input);
     errorMessage.value = '';
-    
-    if (window.electronAPI) {
-      // 使用Electron的API导航到URL
-      const result = await window.electronAPI.navigateToUrl(url);
-      if (!result) {
-        const message = '页面加载失败，请检查地址、网络或目标服务状态。';
-        errorMessage.value = message;
-        await router.push({ name: 'ErrorPage', query: { message } });
-        return;
-      }
-      saveUrlToRecent(url);
-    } else {
-      saveUrlToRecent(url);
-      window.location.href = normalizeHttpUrl(url);
-    }
-  } catch (error) {
-    const message = `访问错误: ${error instanceof Error ? error.message : String(error)}`;
-    errorMessage.value = message;
-    console.error('访问错误:', error);
-    await router.push({ name: 'ErrorPage', query: { message } });
+    saveUrl(url);
+    emit('navigate', url);
+  } catch {
+    errorMessage.value = '仅支持有效的 HTTP 或 HTTPS 地址';
   }
 };
 
-// 清除历史记录和缓存
 const clearHistory = async () => {
   try {
-    if (window.electronAPI) {
-      const cleared = await window.electronAPI.clearHistoryAndCache();
-      if (!cleared) {
-        throw new Error('主进程未能清除缓存');
-      }
+    if (window.electronAPI && !await window.electronAPI.clearHistoryAndCache()) {
+      throw new Error('主进程未能清除浏览数据');
     }
     recentUrls.value = [];
     localStorage.removeItem('recentUrls');
   } catch (error) {
-    errorMessage.value = `清除失败: ${error instanceof Error ? error.message : String(error)}`;
-    console.error('清除历史和缓存失败:', error);
+    errorMessage.value = `清除失败：${error instanceof Error ? error.message : String(error)}`;
   }
 };
+
+const displayHost = (url: string) => {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+};
+
+const hostInitial = (url: string) => displayHost(url).charAt(0).toUpperCase() || 'W';
 </script>
 
+<template>
+  <section class="new-tab-page" :class="{ 'has-background': backgroundImage }" :style="backgroundStyle">
+    <div class="new-tab-backdrop"></div>
+    <div class="new-tab-content">
+      <div class="hero-mark">B</div>
+      <h1>从这里开始</h1>
+      <p class="hero-copy">打开 Web 应用、内网地址或设备管理页面</p>
+
+      <form class="launch-form" @submit.prevent="openUrl()">
+        <span class="search-mark" aria-hidden="true">⌕</span>
+        <input
+          v-model="remoteUrl"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          autofocus
+          placeholder="输入网址或 IP 地址"
+          aria-label="输入网址或 IP 地址"
+        />
+        <button type="submit" :disabled="!remoteUrl.trim()">打开</button>
+      </form>
+      <p v-if="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+
+      <div v-if="recentUrls.length" class="recent-section">
+        <div class="section-heading">
+          <h2>最近访问</h2>
+          <button class="clear-button" type="button" @click="clearHistory">清除记录</button>
+        </div>
+        <div class="recent-grid">
+          <button v-for="url in recentUrls" :key="url" class="recent-item" type="button" @click="openUrl(url)">
+            <span class="recent-icon">{{ hostInitial(url) }}</span>
+            <span class="recent-text">
+              <strong>{{ displayHost(url) }}</strong>
+              <small>{{ url }}</small>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
 <style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: var(--bg-secondary);
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  font-family: Arial, sans-serif;
+.new-tab-page {
+  --new-tab-image: none;
   position: relative;
+  min-height: 100%;
+  padding: clamp(56px, 10vh, 110px) 28px 72px;
   overflow: hidden;
-  transition: background-color 0.3s ease;
+  color: var(--text-primary);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(99, 118, 241, 0.12), transparent 34%),
+    radial-gradient(circle at 80% 20%, rgba(53, 174, 210, 0.10), transparent 30%),
+    var(--bg-secondary);
 }
-
-/* 添加一个伪元素确保背景图片始终显示 */
-.login-container::before {
-  content: "";
+.new-tab-page.has-background { background-image: var(--new-tab-image); background-size: cover; background-position: center; }
+.new-tab-backdrop {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: var(--bg-image); /* 使用CSS变量 */
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: 0.8; /* 稍微透明以确保启动卡片可见 */
-  z-index: -1;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
+  backdrop-filter: blur(14px) saturate(110%);
 }
-
-.login-box {
-  background-color: var(--backdrop-blur);
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 4px 30px var(--shadow-medium);
-  width: 400px;
-  max-width: 90%;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-h1 {
-  color: var(--text-primary);
-  margin-bottom: 30px;
+.new-tab-content { position: relative; width: min(760px, 100%); margin: 0 auto; text-align: center; }
+.hero-mark {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 24px;
+  place-items: center;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(145deg, #3478f6, #6558ef);
+  box-shadow: 0 18px 42px rgba(69, 91, 220, 0.28);
   font-size: 28px;
-  transition: color 0.3s ease;
+  font-weight: 780;
 }
-
-.input-group {
-  margin-bottom: 24px;
-  text-align: left;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--text-secondary);
-  font-size: 16px;
-  transition: color 0.3s ease;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 16px;
-  box-sizing: border-box;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease;
-}
-
-input:focus {
-  outline: none;
-  border-color: var(--button-primary);
-}
-
-button {
-  background-color: var(--button-primary);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  font-size: 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  width: 100%;
-}
-
-button:hover {
-  background-color: var(--button-primary-hover);
-}
-
-button:disabled {
-  background-color: var(--button-disabled);
-  cursor: not-allowed;
-}
-
-.error-message {
-  color: var(--error-color);
-  margin-top: 16px;
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.recent-urls {
-  margin-top: 30px;
-  text-align: left;
-  border-top: 1px solid var(--border-light);
-  padding-top: 20px;
-  transition: border-color 0.3s ease;
-}
-
-.recent-urls h3 {
-  font-size: 16px;
-  color: var(--text-secondary);
-  margin-bottom: 15px;
-  cursor: pointer;
+h1 { margin: 0; font-size: clamp(30px, 4vw, 42px); letter-spacing: -0.045em; }
+.hero-copy { margin: 12px 0 30px; color: var(--text-secondary); font-size: 15px; }
+.launch-form {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  transition: color 0.3s;
+  height: 58px;
+  gap: 12px;
+  padding: 7px 8px 7px 20px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 18px;
+  background: var(--bg-primary);
+  box-shadow: 0 14px 40px var(--shadow-light);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
-
-.recent-urls h3:hover {
-  color: var(--error-color);
-}
-
-.recent-urls h3 .clear-icon {
-  transition: stroke 0.3s;
-  stroke: var(--text-tertiary);
-}
-
-.recent-urls h3:hover .clear-icon {
-  stroke: var(--error-color);
-}
-
-.recent-urls ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-
-.recent-urls li {
-  background-color: var(--bg-tertiary);
-  padding: 12px 15px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s, color 0.3s ease;
-  font-size: 15px;
+.launch-form:focus-within { border-color: #7482ee; box-shadow: 0 16px 44px var(--shadow-light), 0 0 0 4px rgba(99, 115, 230, 0.12); }
+.search-mark { color: var(--text-tertiary); font-size: 24px; }
+.launch-form input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
   color: var(--text-primary);
+  background: transparent;
+  font-size: 15px;
 }
-
-.recent-urls li:hover {
-  background-color: var(--button-primary);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px var(--shadow-light);
+.launch-form input::placeholder { color: var(--chrome-placeholder); }
+.launch-form button {
+  height: 42px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  background: #596bdc;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 140ms ease, transform 100ms ease;
+}
+.launch-form button:hover:not(:disabled) { background: #4659cd; }
+.launch-form button:active:not(:disabled) { transform: scale(0.97); }
+.launch-form button:disabled { opacity: 0.4; cursor: default; }
+.error-message { margin: 14px 0 0; color: var(--error-color); font-size: 13px; }
+.recent-section { margin-top: 64px; text-align: left; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-heading h2 { margin: 0; font-size: 14px; font-weight: 680; letter-spacing: 0.01em; }
+.clear-button {
+  border: 0;
+  color: var(--text-tertiary);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+.clear-button:hover { color: var(--error-color); }
+.recent-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.recent-item {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 13px;
+  padding: 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 100ms ease;
+}
+.recent-item:hover { border-color: var(--chrome-border); background: var(--bg-primary); transform: translateY(-1px); }
+.recent-icon {
+  display: grid;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 11px;
+  color: #5264d2;
+  background: rgba(89, 107, 220, 0.12);
+  font-weight: 750;
+}
+.recent-text { min-width: 0; display: grid; gap: 4px; }
+.recent-text strong,
+.recent-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-text strong { font-size: 13px; font-weight: 650; }
+.recent-text small { color: var(--text-tertiary); font-size: 11px; }
+@media (max-width: 700px) {
+  .new-tab-page { padding-inline: 18px; }
+  .recent-grid { grid-template-columns: 1fr; }
 }
 </style>

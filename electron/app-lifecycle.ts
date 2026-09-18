@@ -52,7 +52,7 @@ function startApplication(config: ResolvedConfig) {
     alwaysOnTop: config.alwaysOnTop,
     webSecurity: config.compatibilityMode === 'standard',
     singlePage: config.singlePage
-  }, config.hiddenControls);
+  });
 }
 
 // 设置应用事件监听

@@ -2,27 +2,26 @@
 
 ## Project Overview
 
-Box（浏览器 Plus）is a compatibility-first, permissive Electron browser for trusted Web applications, intranet systems, device pages, digital signage, and kiosk-like use. It shows a local Vue launch/error UI or loads a configured HTTP(S) page, then injects window controls and application/display behavior into that page.
+Box（浏览器 Plus）is a compatibility-first, permissive Electron browser for trusted Web applications, intranet systems, device pages, digital signage, and kiosk-like use. A persistent Vue browser shell owns the top tabs and navigation controls; remote HTTP(S) content runs in isolated Electron `WebContentsView` tabs below it.
 
-Treat Electron security behavior as load-bearing. The default `permissive` compatibility mode disables certificate checks/web security and relaxes CSP; `standard` preserves Chromium security behavior. Both modes inject JavaScript into remote content. UI restrictions such as blocked shortcuts and DevTools are not security boundaries.
+Treat Electron security behavior as load-bearing. The default `permissive` compatibility mode disables certificate checks/web security and relaxes CSP; `standard` preserves Chromium security behavior. Remote tabs do not receive the app preload bridge. UI restrictions such as blocked shortcuts and DevTools are not security boundaries.
 
 ## Architecture & Data Flow
 
 - `electron/main.ts` calls `initializeApp()` in `electron/app-lifecycle.ts`.
 - Startup resolves one `ResolvedConfig` before Electron becomes ready, applies its compatibility/session policy, registers IPC, then creates windows. Development reads `process.cwd()/config.json`; packaged builds read beside `process.execPath`; `-config` can override the path. Precedence is defaults, then file, then CLI.
-- `electron/window-manager.ts` owns the main `BrowserWindow`, local/remote navigation, managed child windows, shortcuts, load failures, and cleanup.
-- The Vue renderer starts at `src/main.ts`. `src/views/Login.vue` sends a URL through `window.electronAPI`; preload forwards it to `electron/ipc-handlers.ts`, which calls `BrowserWindow.loadURL()`.
+- `electron/window-manager.ts` owns the frameless main `BrowserWindow`, `WebContentsView` tabs, active-tab layout, navigation history, page titles, new-window handling, shortcuts, and cleanup. The Vue tab strip provides the custom drag region, visible border, and window controls.
+- The Vue renderer starts at `src/main.ts`. `src/App.vue` keeps the browser shell mounted; `src/views/Login.vue` is the local new-tab page. Browser commands flow through the typed preload bridge to the main-process tab manager.
 - Privileged flow must remain: Vue component/composable → typed `window.electronAPI` in `src/vite-env.d.ts` → fixed bridge method/channel in `electron/preload.ts` → handler in `electron/ipc-handlers.ts` → Electron operation.
-- Remote-page controls flow through `shared/control-panel-generator.ts` → `electron/controls-injector.ts` → injected DOM/script → `postMessage` → preload → IPC.
-- Load failures route to the local hash route `/error`. HTTP(S) new-window requests become recursively managed child windows, or reuse the current window in `singlePage` mode; other protocols are denied.
-- Main-process state is module-scoped where ownership is singular (the main window, the managed-window set, and the close allowlist). Renderer state uses Vue `ref`/`computed`; shared theme state lives in `useTheme.ts`; persisted keys are `theme` and `recentUrls`. Clearing history/cache clears session cookies and site storage as well as both local keys.
-- In `singlePage` mode, the main-window home action returns to the configured URL when present; otherwise it returns to the local launch page. A child-window home action closes that child.
+- HTTP(S) new-window requests become tabs, or reuse the current tab in `singlePage` mode; other protocols are denied.
+- Main-process state is module-scoped where ownership is singular (the main window, tab map, and active tab). Renderer state uses Vue `ref`/`computed`; shared theme state lives in `useTheme.ts`; persisted keys are `theme` and `recentUrls`. Clearing history/cache clears session cookies and site storage as well as both local keys.
+- The home action resets the current tab to the local new-tab page.
 
 ## Key Directories
 
 - `src/` — Vue 3 renderer: local launch/error views, router, theme composable, components, global styles.
 - `electron/` — privileged main/preload code: lifecycle, BrowserWindows, IPC, configuration, session setup, and page injection.
-- `shared/` — cross-boundary types, URL normalization, generated control-panel script, and injectable CSS.
+- `shared/` — cross-boundary types and URL normalization.
 - `assets/` — build-time application icons and the README screenshot; only `assets/index.ico` is copied into the packaged application files.
 - `dist/`, `dist-electron/`, `build/` — generated outputs; never hand-edit or treat as source.
 
@@ -65,7 +64,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - Reuse functional seams: explicit parameters such as `BrowserWindow`/`hiddenControls`, pure config parsing, module getters, and guard clauses. There is no DI container, class service layer, Pinia/Vuex store, or second state system.
 - Before window operations, check null/destroyed state. Use `async`/`await` with `try/catch` for user-visible operations; use Promise `.catch(...)` for fire-and-observe Electron calls. Log unexpected injection, configuration, and session failures; swallow only documented non-critical failures.
 - For new IPC behavior, expose a fixed preload method rather than raw `ipcRenderer`, add types to `src/vite-env.d.ts` or `shared/types.mts`, validate inputs/senders, and preserve context isolation.
-- For behavior shared by main and child windows, extend `setupCommonWindowEvents`; keep role-specific logic in the existing main/child helpers. Put injected Web application/display changes in `shared/styles.ts` or `shared/control-panel-generator.ts`.
+- Keep browser-shell state changes in the existing `window-manager.ts` tab helpers and publish a full `BrowserState` snapshot after relevant navigation changes.
 - Comments and user-facing messages are predominantly Simplified Chinese. Preserve that convention for UI/docs unless intentionally changing project language.
 
 ## Important Files
@@ -83,7 +82,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - `tsconfig.json` — strict renderer configuration selected by `vue-tsc`.
 - `tsconfig.node.json` — strict Electron/shared/Vite-config check invoked by `pnpm check`.
 - `electron/app-config.mts` and `electron/app-config.test.mts` — typed config loading, compatibility migration, CLI merging, path resolution, and tests.
-- `shared/types.mts`, `shared/url.mts`, `shared/url.test.mts` — cross-boundary contracts and tested HTTP(S) normalization.
+- `shared/types.mts`, `shared/url.mts`, `shared/url.test.mts` — cross-boundary browser/tab contracts and tested HTTP(S) normalization.
 - `electron/app-lifecycle.ts`, `electron/window-manager.ts`, `electron/preload.ts`, `electron/ipc-handlers.ts` — main runtime and trust boundary.
 - `README.md` — user-facing commands, CLI/config flags, themes, hidden controls, and manual behavior examples.
 
@@ -103,7 +102,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 
 - `pnpm test` uses the Node.js built-in test runner for config parsing/precedence/path behavior and HTTP(S) URL normalization. There is no linter, formatter, or coverage setup. CI validates workflows, tests, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
 - `pnpm check` is the repository-wide static gate: `vue-tsc` checks `src/**/*`, then `tsc -p tsconfig.node.json` checks Electron, shared code, and Vite configs.
-- For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include URL navigation/load failure, main versus child windows, valid and invalid config/CLI precedence, hidden controls, session/cache clearing, fullscreen/always-on-top/home-button behavior, custom backgrounds, and `Ctrl + Shift + Alt` control-panel toggling.
+- For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include creating/switching/closing tabs, URL navigation/load failure, back/forward/reload/home, popup-to-tab behavior, valid and invalid config/CLI precedence, session/cache clearing, fullscreen/always-on-top behavior, custom backgrounds, and `Ctrl/Cmd + T/W/L` shortcuts.
 - For packaging changes, use the checked `pnpm build:electron` or the relevant platform script and verify the expected files under `build/`.
 - Before moving a release tag, run Package Test manually from GitHub Actions when packaging or dependency behavior has changed.
 - Extend the existing Node tests for configuration precedence and URL normalization. If a browser/Electron runner is later added, prioritize IPC validation, theme persistence, load-error routing, and window behavior.

@@ -45,6 +45,22 @@ export interface RendererConfig {
   hiddenControls: HiddenControl[];
 }
 
+/** 顶部浏览器外壳展示的标签页状态 */
+export interface BrowserTabState {
+  id: string;
+  title: string;
+  url: string | null;
+  loading: boolean;
+  canGoBack: boolean;
+  canGoForward: boolean;
+}
+
+/** 主进程向浏览器外壳同步的完整状态 */
+export interface BrowserState {
+  tabs: BrowserTabState[];
+  activeTabId: string | null;
+}
+
 /** 错误页面属性 */
 export interface ErrorPageProps {
   message?: string;

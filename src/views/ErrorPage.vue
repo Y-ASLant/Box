@@ -16,15 +16,7 @@ const props = defineProps<ErrorPageProps>();
 const router = useRouter();
 
 const handleAction = async () => {
-  if (props.isSubWindow) {
-    if (window.electronAPI) {
-      await window.electronAPI.closeWindow();
-    } else {
-      window.close();
-    }
-  } else {
-    await router.push('/');
-  }
+  await router.push('/');
 };
 </script>
 
