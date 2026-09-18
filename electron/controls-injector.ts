@@ -1,9 +1,13 @@
 import { BrowserWindow } from 'electron';
 import { baseWindowCSS, customScrollbarCSS, hiddenMouseCSS, hiddenScrollbarCSS, newWindowCSS } from '../shared/styles';
 import { generateControlPanelScript } from '../shared/control-panel-generator';
+import type { HiddenControl } from '../shared/types.mts';
 
 // 注入控制脚本到webContents
-export async function injectControlsScript(targetWindow: BrowserWindow, hiddenButtons: string[] = []): Promise<void> {
+export async function injectControlsScript(
+  targetWindow: BrowserWindow,
+  hiddenControls: readonly HiddenControl[] = []
+): Promise<void> {
   if (targetWindow.isDestroyed() || targetWindow.webContents.isDestroyed()) return;
 
   try {
@@ -12,7 +16,7 @@ export async function injectControlsScript(targetWindow: BrowserWindow, hiddenBu
       console.error('无法注入控制脚本：DOM未准备好');
       return;
     }
-    const script = generateControlPanelScript(hiddenButtons);
+    const script = generateControlPanelScript(hiddenControls);
     if (!script) return;
     await targetWindow.webContents.executeJavaScript(script);
   } catch (error) {
@@ -21,14 +25,14 @@ export async function injectControlsScript(targetWindow: BrowserWindow, hiddenBu
 }
 
 // 注入基础样式和拖动区域
-export function injectBaseStyles(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
+export function injectBaseStyles(targetWindow: BrowserWindow, hiddenControls: readonly HiddenControl[] = []) {
   if (targetWindow.isDestroyed()) return;
 
-  const scrollbarCSS = hiddenButtons.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
+  const scrollbarCSS = hiddenControls.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
   targetWindow.webContents.insertCSS(baseWindowCSS).catch(error => console.error('插入基础CSS错误:', error));
   targetWindow.webContents.insertCSS(scrollbarCSS).catch(error => console.error('插入滚动条CSS错误:', error));
 
-  if (hiddenButtons.includes('mouse')) {
+  if (hiddenControls.includes('mouse')) {
     targetWindow.webContents.insertCSS(hiddenMouseCSS).catch(error => console.error('插入隐藏鼠标CSS错误:', error));
   }
 
@@ -46,14 +50,14 @@ export function injectBaseStyles(targetWindow: BrowserWindow, hiddenButtons: str
 }
 
 // 为新窗口注入样式（包含更严格的文本选择禁用）
-export function injectNewWindowStyles(targetWindow: BrowserWindow, hiddenButtons: string[] = []) {
+export function injectNewWindowStyles(targetWindow: BrowserWindow, hiddenControls: readonly HiddenControl[] = []) {
   if (targetWindow.isDestroyed()) return;
 
-  const scrollbarCSS = hiddenButtons.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
+  const scrollbarCSS = hiddenControls.includes('scroll') ? hiddenScrollbarCSS : customScrollbarCSS;
   targetWindow.webContents.insertCSS(newWindowCSS).catch(error => console.error('插入新窗口CSS错误:', error));
   targetWindow.webContents.insertCSS(scrollbarCSS).catch(error => console.error('插入滚动条CSS错误:', error));
 
-  if (hiddenButtons.includes('mouse')) {
+  if (hiddenControls.includes('mouse')) {
     targetWindow.webContents.insertCSS(hiddenMouseCSS).catch(error => console.error('插入隐藏鼠标CSS错误:', error));
   }
 }

@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { normalizeHttpUrl } from '../../shared/url';
+import { normalizeHttpUrl } from '../../shared/url.mts';
 
 const router = useRouter();
 const remoteUrl = ref('');

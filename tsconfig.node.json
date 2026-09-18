@@ -19,6 +19,8 @@
     "vite.config.mts",
     "vite.shared.mts",
     "electron/**/*.ts",
-    "shared/**/*.ts"
+    "electron/**/*.mts",
+    "shared/**/*.ts",
+    "shared/**/*.mts"
   ]
 }

@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import type { DefineComponent } from 'vue';
-import type { AppConfig } from '../shared/types';
+import type { RendererConfig } from '../shared/types.mts';
 
 declare module '*.vue' {
   const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>;
@@ -16,7 +16,7 @@ declare global {
     maximizeWindow: () => Promise<boolean>;
     closeWindow: () => Promise<boolean>;
     toggleFullscreen: () => Promise<boolean>;
-    getAppConfig: () => Promise<AppConfig>;
+    getAppConfig: () => Promise<RendererConfig>;
     getBackgroundPath: () => Promise<string | null>;
     clearHistoryAndCache: () => Promise<boolean>;
   }

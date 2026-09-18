@@ -6,12 +6,19 @@
 
 ### 新增
 
+- 新增 `standard` 与 `permissive` 浏览器兼容模式。
+- 新增基于 Node.js 内置测试运行器的配置和 URL 单元测试。
+
 ### 变更
 
 - 产品重新定位为面向受信任 Web 应用、内网系统和展示终端的宽松兼容浏览器，并统一相关界面与文档文案。
-- 根据当前实现校正文档中的配置优先级、主页按钮、窗口关闭、缓存清理和受管子窗口行为，移除“单页模式”等过时表述。
+- 配置重构为强类型布尔值、数组和单一解析结果，命令行参数现在优先于配置文件。
+- 打包应用默认从可执行文件目录读取配置，相对背景路径基于配置文件目录解析。
+- 单页模式现在复用当前窗口打开新链接，并让主页按钮返回配置首页。
 
 ### 修复
+
+- 修复宽松 CSP 可能与服务器原有 CSP 并存的问题，并阻止非 HTTP(S) 子窗口。
 
 ### 移除
 
@@ -50,12 +57,19 @@ This file records changes to Box (Browser Plus). Its format follows [Keep a Chan
 
 ### Added
 
+- Added `standard` and `permissive` browser compatibility modes.
+- Added configuration and URL unit tests using the built-in Node.js test runner.
+
 ### Changed
 
 - Repositioned the product as a permissive compatibility browser for trusted Web applications, intranet systems, and display terminals, with matching UI and documentation copy.
-- Aligned the documentation with current configuration precedence, home-button, window-closing, cache-clearing, and managed-child-window behavior, removing outdated “single-page mode” claims.
+- Refactored configuration into typed booleans, arrays, and one resolved model, with command-line options taking precedence over the file.
+- Packaged builds now load configuration beside the executable, and relative backgrounds resolve from the configuration directory.
+- Single-page mode now reuses the current window for new links and returns the Home action to the configured start page.
 
 ### Fixed
+
+- Fixed relaxed CSP coexisting with an original server policy, and blocked non-HTTP(S) child windows.
 
 ### Removed
 

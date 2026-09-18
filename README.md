@@ -17,7 +17,7 @@ Box 不是面向公共互联网的通用浏览器，也不是安全隔离容器�
 - 兼容使用自签名证书、宽松同源策略或特殊 CSP 的受信任旧系统
 - 通过配置文件和启动参数设置启动地址、全屏、置顶和主页按钮行为
 
-“宽松”表示 Box 主动忽略证书错误、关闭 Electron Web Security，并为页面设置宽松 CSP，以减少 Chromium 默认安全策略对受控 Web 程序的限制。它不会绕过服务器登录、网络 ACL、VPN、防火墙、操作系统权限，也不保证所有要求安全上下文的 Web API 都能在普通 HTTP 页面运行。
+默认的 `permissive` 兼容模式会忽略证书错误、关闭 Electron Web Security，并为页面设置宽松 CSP，以减少 Chromium 默认安全策略对受控 Web 程序的限制。也可以切换为遵循浏览器安全策略的 `standard` 模式。两种模式都不会绕过服务器登录、网络 ACL、VPN、防火墙或操作系统权限，也不保证所有要求安全上下文的 Web API 都能在普通 HTTP 页面运行。
 
 ## 功能
 
@@ -33,11 +33,11 @@ Box 不是面向公共互联网的通用浏览器，也不是安全隔离容器�
 - URL 加载失败时显示本地错误页
 
 > [!IMPORTANT]
-> Box 面向受控环境，并默认信任加载的页面。应用会忽略证书错误、关闭 Electron Web Security、放宽 CSP，并向页面注入窗口控制能力。请只加载可信的 Web 应用或内网服务，不要用它浏览未知网站，也不要把快捷键、右键菜单或开发者工具限制视为安全边界。
+> Box 面向受控环境，并在默认的 `permissive` 模式下信任加载的页面。应用会向页面注入窗口控制能力。请只加载可信的 Web 应用或内网服务，不要用宽松模式浏览未知网站，也不要把快捷键、右键菜单或开发者工具限制视为安全边界。
 
 ## 环境要求
 
-- Node.js 22.12 或更高版本
+- Node.js 22.18 或更高版本
 - pnpm 12.4.2 或更高版本
 
 ```bash
@@ -51,14 +51,15 @@ pnpm install
 pnpm start        # 启动 Electron 开发模式
 pnpm dev          # 仅启动 Vue/Vite renderer
 pnpm preview      # 预览已经生成的 renderer 生产构建
+pnpm test         # 运行配置与 URL 单元测试
 pnpm check        # 检查 renderer、Electron、shared 和构建配置
 pnpm check:node   # 仅检查 Electron、shared 和构建配置
-pnpm build        # 类型检查并构建 renderer
+pnpm build        # 运行测试、类型检查并构建 renderer
 ```
 
 `pnpm start` 和 Electron 打包命令会按需准备当前平台的 Electron 运行时，首次执行需要联网下载。
 
-项目当前没有单元测试框架以及 lint、格式化命令，`pnpm check` 是提交前和 CI 使用的静态检查入口。
+项目使用 Node.js 内置测试运行器覆盖配置和 URL 边界；当前没有 lint、格式化或覆盖率命令。`pnpm check` 是静态检查入口，所有构建命令会先运行测试和静态检查。
 
 ## 打包
 
@@ -100,7 +101,7 @@ make distclean   # clean 后继续删除 node_modules 和仓库内 pnpm store
 3. 完成本地检查后提交代码，再创建并推送标签。
 
 ```bash
-pnpm check
+pnpm build
 git tag v1.0.0
 git push origin v1.0.0
 ```
@@ -115,31 +116,37 @@ git push origin v1.0.0
 
 ## 配置
 
-应用启动时读取**当前工作目录**中的可选 `config.json`，不是固定读取可执行文件所在目录。每个字段的有效配置文件值优先于同名命令行参数；配置文件未提供、为空或枚举值无效时，才使用有效的命令行值，最后回退到默认行为。
+开发模式默认读取当前工作目录中的 `config.json`；打包后默认读取 `Box` 可执行文件旁的 `config.json`。可以使用 `-config=<path>` 指定其他文件。相对背景路径基于配置文件目录解析，命令行提供的相对背景路径基于当前工作目录解析。
+
+配置优先级为：内置默认值 < 配置文件 < 命令行参数。命令行支持单横线和双横线形式。
 
 ```json
 {
-  "link": "https://example.com",
-  "mode": "fullscreen",
-  "window": "top",
-  "page": "single",
+  "url": "https://example.com",
+  "fullscreen": true,
+  "alwaysOnTop": true,
+  "singlePage": true,
   "theme": "dark",
-  "hide": "home,close,scroll",
-  "bg": "C:/path/to/background.jpg"
+  "hiddenControls": ["home", "close", "scroll"],
+  "background": "./background.jpg",
+  "compatibilityMode": "permissive"
 }
 ```
 
 | 配置字段 | 命令行参数 | 可用值 | 默认行为 | 说明 |
 | --- | --- | --- | --- | --- |
-| `link` | `-link=<url>` | HTTP(S) 地址、域名或 IP | 显示本地启动页 | 启动后直接加载页面；未写协议时补充 `http://` |
-| `mode` | `-mode=<mode>` | `fullscreen`、`normal` | `normal` | 主窗口初始窗口模式 |
-| `window` | `-window=<type>` | `top`、`normal` | `normal` | 主窗口是否始终置顶 |
-| `page` | `-page=<type>` | `single`、`multi` | `multi` | 只改变主窗口主页按钮行为，见“操作与窗口行为” |
+| `url` | `-url=<url>` | HTTP(S) 地址、域名或 IP | 显示本地启动页 | 启动后直接加载页面；未写协议时补充 `http://` |
+| `fullscreen` | `-fullscreen=<bool>` | `true`、`false` | `false` | 主窗口是否全屏启动 |
+| `alwaysOnTop` | `-always-on-top=<bool>` | `true`、`false` | `false` | 主窗口是否始终置顶 |
+| `singlePage` | `-single-page=<bool>` | `true`、`false` | `false` | 新窗口链接复用当前窗口；主页按钮返回配置首页 |
 | `theme` | `-theme=<theme>` | `light`、`dark` | 已保存偏好；首次使用按系统配色 | 只影响本地启动页和错误页 |
-| `hide` | `-hide=<items>` | 见下表 | 不隐藏 | 逗号分隔，可组合多个隐藏项 |
-| `bg` | `-bg=<path>` | 本地文件路径 | 默认背景 | 只影响启动页；相对路径基于当前工作目录 |
+| `hiddenControls` | `-hidden-controls=<items>` | 见下表 | 不隐藏 | 配置文件使用字符串数组，命令行使用逗号分隔 |
+| `background` | `-background=<path>` | 本地文件路径 | 默认背景 | 只影响启动页 |
+| `compatibilityMode` | `-compatibility-mode=<mode>` | `permissive`、`standard` | `permissive` | 浏览器兼容与安全策略 |
 
-配置文件根节点必须是对象，配置值必须是字符串。无效类型、枚举值和未知隐藏项会被忽略并写入主进程日志；不存在或无法解析的背景文件不会显示。`hide` 在配置文件中只要包含至少一个有效项，就整体优先于命令行的 `-hide`。命令行参数和值区分大小写；同名参数重复出现时使用第一个。
+`permissive` 会忽略证书错误、关闭 Web Security 并放宽 CSP；`standard` 保留 Chromium 默认的证书、同源和 CSP 行为。无效类型、枚举值、未知字段和隐藏项会被忽略并写入主进程日志；不存在的背景文件不会显示。
+
+旧字段 `link`、`mode`、`window`、`page`、`hide`、`bg` 以及对应旧命令行参数仍可使用，但会输出迁移提示，后续版本可能移除。
 
 ### 可隐藏元素
 
@@ -158,21 +165,21 @@ git push origin v1.0.0
 开发模式下可直接传递参数：
 
 ```bash
-pnpm start -link=https://example.com -theme=dark -hide=scroll
+pnpm start --url=https://example.com --theme=dark --hidden-controls=scroll
 ```
 
 安装后的可执行文件使用相同格式，例如：
 
 ```powershell
-Box.exe -link=http://192.168.1.10 -mode=fullscreen -window=top
+Box.exe --url=http://192.168.1.10 --fullscreen=true --always-on-top=true
 ```
 
 ## 操作与窗口行为
 
 - 按下 `Ctrl + Shift + Alt` 切换悬浮控制面板。
 - 主窗口的系统关闭操作会最小化窗口；控制面板的关闭按钮会真正关闭主窗口。在 Windows 和 Linux 上，所有窗口关闭后应用退出；macOS 遵循保留应用进程的常规行为。
-- `page=multi` 时，主窗口的主页按钮返回本地启动页；`page=single` 时，该按钮改为在系统文件管理器中打开当前用户目录。这个选项不会禁止页面导航或新窗口。
-- 页面通过 `window.open` 等方式请求新窗口时，Box 会阻止默认窗口并创建同样受管的无边框子窗口。子窗口的主页按钮和错误页按钮用于关闭该子窗口。
+- `singlePage=false` 时，主窗口的主页按钮返回本地启动页；`singlePage=true` 且配置了 `url` 时，主页按钮返回该配置首页。
+- 页面通过 `window.open` 等方式请求 HTTP(S) 新窗口时，普通模式会创建受管的无边框子窗口，单页模式会在当前窗口打开。其他协议会被拒绝。
 - 启动页最多保存三条最近地址。点击“最近访问”标题或其清理图标会清除整个 Electron 会话的 HTTP 缓存、Cookie、站点存储、Service Worker 和最近地址，也会移除本地保存的主题偏好，并可能使已登录站点退出。
 - F12、`Ctrl/Cmd + Shift + I/J`、右键菜单和 `Alt + F4` 在应用窗口内被拦截；这些限制只是交互约束，不是安全控制。
 
@@ -191,7 +198,7 @@ assets/    构建所需图标和 README 截图
 Vue/注入控件 → preload 固定方法 → IPC handler → Electron 操作
 ```
 
-预加载脚本不会暴露原始 `ipcRenderer`。本地导航、配置读取和清理操作会校验调用方；远程页面的悬浮控件只能调用绑定到当前窗口的固定窗口操作。由于 Box 仍会关闭 Web Security、忽略证书错误并向页面注入脚本，这些边界不能把不受信任页面变成安全内容。
+预加载脚本不会暴露原始 `ipcRenderer`。本地导航、配置读取和清理操作会校验调用方；远程页面的悬浮控件只能调用绑定到当前窗口的固定窗口操作。由于默认的 `permissive` 模式会关闭 Web Security、忽略证书错误并向页面注入脚本，这些边界不能把不受信任页面变成安全内容。需要浏览器默认安全策略时应使用 `standard` 模式。
 
 ## License
 

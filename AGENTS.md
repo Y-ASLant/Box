@@ -4,19 +4,19 @@
 
 Box（浏览器 Plus）is a compatibility-first, permissive Electron browser for trusted Web applications, intranet systems, device pages, digital signage, and kiosk-like use. It shows a local Vue launch/error UI or loads a configured HTTP(S) page, then injects window controls and application/display behavior into that page.
 
-Treat Electron security behavior as load-bearing. The app intentionally disables certificate checks/web security, relaxes CSP, and injects JavaScript into remote content. UI restrictions such as blocked shortcuts and DevTools are not security boundaries.
+Treat Electron security behavior as load-bearing. The default `permissive` compatibility mode disables certificate checks/web security and relaxes CSP; `standard` preserves Chromium security behavior. Both modes inject JavaScript into remote content. UI restrictions such as blocked shortcuts and DevTools are not security boundaries.
 
 ## Architecture & Data Flow
 
 - `electron/main.ts` calls `initializeApp()` in `electron/app-lifecycle.ts`.
-- Startup registers session policy, reads optional `process.cwd()/config.json`, merges CLI flags, registers IPC, then creates windows. Per field, a non-empty valid config-file value overrides the CLI value; invalid enum values fall back to CLI. If config `hide` contains any valid item, its valid set replaces CLI `hide`.
+- Startup resolves one `ResolvedConfig` before Electron becomes ready, applies its compatibility/session policy, registers IPC, then creates windows. Development reads `process.cwd()/config.json`; packaged builds read beside `process.execPath`; `-config` can override the path. Precedence is defaults, then file, then CLI.
 - `electron/window-manager.ts` owns the main `BrowserWindow`, local/remote navigation, managed child windows, shortcuts, load failures, and cleanup.
 - The Vue renderer starts at `src/main.ts`. `src/views/Login.vue` sends a URL through `window.electronAPI`; preload forwards it to `electron/ipc-handlers.ts`, which calls `BrowserWindow.loadURL()`.
 - Privileged flow must remain: Vue component/composable → typed `window.electronAPI` in `src/vite-env.d.ts` → fixed bridge method/channel in `electron/preload.ts` → handler in `electron/ipc-handlers.ts` → Electron operation.
 - Remote-page controls flow through `shared/control-panel-generator.ts` → `electron/controls-injector.ts` → injected DOM/script → `postMessage` → preload → IPC.
-- Load failures route to the local hash route `/error`. New-window requests are denied by default and replaced with a recursively managed child `BrowserWindow`.
-- Main-process state is module-scoped where ownership is singular (`appConfig`, the main window, the managed-window set, and the close allowlist). Renderer state uses Vue `ref`/`computed`; shared theme state lives in `useTheme.ts`; persisted keys are `theme` and `recentUrls`. Clearing history/cache clears session cookies and site storage as well as both local keys.
-- `page=single` is a legacy behavior name, not a navigation or popup restriction: it makes the main-window home action open `app.getPath('home')`. `page=multi` returns the main window to the local launch page. A child-window home action closes that child in either mode.
+- Load failures route to the local hash route `/error`. HTTP(S) new-window requests become recursively managed child windows, or reuse the current window in `singlePage` mode; other protocols are denied.
+- Main-process state is module-scoped where ownership is singular (the main window, the managed-window set, and the close allowlist). Renderer state uses Vue `ref`/`computed`; shared theme state lives in `useTheme.ts`; persisted keys are `theme` and `recentUrls`. Clearing history/cache clears session cookies and site storage as well as both local keys.
+- In `singlePage` mode, the main-window home action returns to the configured URL when present; otherwise it returns to the local launch page. A child-window home action closes that child.
 
 ## Key Directories
 
@@ -34,10 +34,11 @@ pnpm install
 pnpm start             # Electron development mode
 pnpm dev               # renderer-only Vite server
 pnpm preview           # preview renderer build
+pnpm test              # Node configuration and URL tests
 pnpm check             # strict renderer + Electron/shared/config checks
 pnpm check:node        # Electron/shared/config TypeScript only
-pnpm build             # full checks + renderer bundle
-pnpm build:electron    # full checks + Electron bundle/package
+pnpm build             # tests + full checks + renderer bundle
+pnpm build:electron    # tests + full checks + Electron bundle/package
 pnpm build:win         # checked Windows x64 package
 pnpm build:win:x64     # explicit Windows x64 package
 pnpm build:mac         # checked macOS package for the current/default architecture
@@ -52,7 +53,7 @@ make clean             # deletes generated outputs, caches, logs, and temporary 
 make distclean         # make clean plus node_modules/ and repo-local .pnpm-store/
 ```
 
-There are no `test`, `lint`, `format`, or coverage commands. Do not invent or claim them.
+There are no `lint`, `format`, or coverage commands. Do not invent or claim them.
 
 ## Code Conventions & Common Patterns
 
@@ -60,10 +61,10 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - Use two-space indentation. Existing TypeScript generally uses single quotes and semicolons, though formatting is not fully uniform and no formatter enforces it.
 - Use camelCase for functions/variables, `handle…` for handlers, `use…` for composables, PascalCase for types/components, and `SCREAMING_SNAKE_CASE` for generator constants.
 - TypeScript implementation files use kebab-case (`window-manager.ts`); Vue components/views use PascalCase (`ThemeToggle.vue`, `Login.vue`).
-- Put reusable cross-process contracts in `shared/types.ts`. Keep filesystem, session, protocol, and `BrowserWindow` access in `electron/`; keep UI and renderer state in `src/`.
-- Reuse functional seams: explicit parameters such as `BrowserWindow`/`hiddenButtons`, module getters, and guard clauses. There is no DI container, class service layer, Pinia/Vuex store, or second state system.
+- Put reusable cross-process contracts in `shared/types.mts`. Keep filesystem, session, protocol, and `BrowserWindow` access in `electron/`; keep UI and renderer state in `src/`.
+- Reuse functional seams: explicit parameters such as `BrowserWindow`/`hiddenControls`, pure config parsing, module getters, and guard clauses. There is no DI container, class service layer, Pinia/Vuex store, or second state system.
 - Before window operations, check null/destroyed state. Use `async`/`await` with `try/catch` for user-visible operations; use Promise `.catch(...)` for fire-and-observe Electron calls. Log unexpected injection, configuration, and session failures; swallow only documented non-critical failures.
-- For new IPC behavior, expose a fixed preload method rather than raw `ipcRenderer`, add types to `src/vite-env.d.ts` or `shared/types.ts`, validate inputs/senders, and preserve context isolation.
+- For new IPC behavior, expose a fixed preload method rather than raw `ipcRenderer`, add types to `src/vite-env.d.ts` or `shared/types.mts`, validate inputs/senders, and preserve context isolation.
 - For behavior shared by main and child windows, extend `setupCommonWindowEvents`; keep role-specific logic in the existing main/child helpers. Put injected Web application/display changes in `shared/styles.ts` or `shared/control-panel-generator.ts`.
 - Comments and user-facing messages are predominantly Simplified Chinese. Preserve that convention for UI/docs unless intentionally changing project language.
 
@@ -81,13 +82,14 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - `vite.shared.mts` — shared output, minification, alias, chunk, and server settings.
 - `tsconfig.json` — strict renderer configuration selected by `vue-tsc`.
 - `tsconfig.node.json` — strict Electron/shared/Vite-config check invoked by `pnpm check`.
-- `electron/app-config.ts` — config-file loading, CLI merging, and background-path resolution.
+- `electron/app-config.mts` and `electron/app-config.test.mts` — typed config loading, compatibility migration, CLI merging, path resolution, and tests.
+- `shared/types.mts`, `shared/url.mts`, `shared/url.test.mts` — cross-boundary contracts and tested HTTP(S) normalization.
 - `electron/app-lifecycle.ts`, `electron/window-manager.ts`, `electron/preload.ts`, `electron/ipc-handlers.ts` — main runtime and trust boundary.
 - `README.md` — user-facing commands, CLI/config flags, themes, hidden controls, and manual behavior examples.
 
 ## Runtime/Tooling Preferences
 
-- Use Node.js **22.12+**; this floor is declared in `package.json` and required by Electron 44/Vite 8.
+- Use Node.js **22.18+**; this floor is declared in `package.json` and keeps native TypeScript tests warning-free. CI uses Node.js 22.23.2.
 - Use **pnpm 12.4.2**. Do not create npm/yarn lockfiles or replace pnpm-specific `allowBuilds`/overrides.
 - Vite configs are native-ESM-compatible (`.mts`/`.mjs`). Keep explicit extensions for local ESM imports and use `import.meta.dirname`, not `__dirname`.
 - Keep renderer asset paths relative (`base: './'`) for packaged `file://` loading. `@` resolves to `src/`.
@@ -95,16 +97,16 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - electron-builder packages only `dist/**/*`, `dist-electron/**/*`, and the runtime `assets/index.ico`; README screenshots and source-only icons stay outside `app.asar`. Vue and Vue Router remain dev dependencies because Vite fully bundles them and packaged runtime `node_modules` is intentionally empty. Windows uses x64 NSIS; macOS uses DMG for x64 and arm64; Linux uses AppImage/deb/rpm for x64 and arm64. Release filenames include version, platform, and architecture.
 - Electron 44 downloads its platform binary lazily. The `prestart` and `prebuild:electron` hooks run `install-electron --no`, and electron-builder reuses `node_modules/electron/dist` through `electronDist`.
 - `make build` removes `dist/`, `dist-electron/`, unpacked staging directories, builder diagnostics, and updater metadata only after packaging succeeds. Use `pnpm build:electron` when those intermediates are needed for debugging or runtime smoke checks.
-- Supported runtime flags are the case-sensitive `-link`, `-mode`, `-window`, `-page`, `-theme`, `-hide`, and `-bg`; hide values are comma-separated. Missing protocols are normalized to `http://`. `mode`, `window`, `page`, and `theme` accept only the values documented in `electron/app-config.ts`.
+- Canonical runtime flags are `-url`, `-fullscreen`, `-always-on-top`, `-single-page`, `-theme`, `-hidden-controls`, `-background`, `-compatibility-mode`, and `-config`; one or two leading dashes are accepted. Legacy `-link`, `-mode`, `-window`, `-page`, `-hide`, and `-bg` remain compatibility aliases. Missing protocols are normalized to `http://`.
 
 ## Testing & QA
 
-- There is no automated test suite, test framework, linter, formatter, or coverage setup. CI validates workflows, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
+- `pnpm test` uses the Node.js built-in test runner for config parsing/precedence/path behavior and HTTP(S) URL normalization. There is no linter, formatter, or coverage setup. CI validates workflows, tests, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
 - `pnpm check` is the repository-wide static gate: `vue-tsc` checks `src/**/*`, then `tsc -p tsconfig.node.json` checks Electron, shared code, and Vite configs.
 - For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include URL navigation/load failure, main versus child windows, valid and invalid config/CLI precedence, hidden controls, session/cache clearing, fullscreen/always-on-top/home-button behavior, custom backgrounds, and `Ctrl + Shift + Alt` control-panel toggling.
 - For packaging changes, use the checked `pnpm build:electron` or the relevant platform script and verify the expected files under `build/`.
 - Before moving a release tag, run Package Test manually from GitHub Actions when packaging or dependency behavior has changed.
-- If adding tests, cover observable boundaries such as IPC validation, configuration precedence, URL normalization, theme persistence, and load-error routing. Introducing a runner/config is a new project-wide convention; keep it minimal and document the command.
+- Extend the existing Node tests for configuration precedence and URL normalization. If a browser/Electron runner is later added, prioritize IPC validation, theme persistence, load-error routing, and window behavior.
 
 ## Release & Changelog Conventions
 

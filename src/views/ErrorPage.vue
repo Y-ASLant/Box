@@ -9,7 +9,7 @@
 
 <script lang="ts" setup>
 import { useRouter } from 'vue-router';
-import type { ErrorPageProps } from '../../shared/types';
+import type { ErrorPageProps } from '../../shared/types.mts';
 
 const props = defineProps<ErrorPageProps>();
 

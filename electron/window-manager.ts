@@ -2,8 +2,8 @@ import { BrowserWindow, app, Menu } from 'electron';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { injectBaseStyles, injectNewWindowStyles, injectNewWindowBehaviors } from './controls-injector';
-import type { WindowOptions } from '../shared/types';
-import { normalizeHttpUrl } from '../shared/url';
+import type { HiddenControl, WindowOptions } from '../shared/types.mts';
+import { isHttpUrl, normalizeHttpUrl } from '../shared/url.mts';
 
 // 保持窗口对象的全局引用，避免JavaScript对象被垃圾回收时窗口关闭
 let mainWindow: BrowserWindow | null = null;
@@ -19,7 +19,7 @@ export function getMainWindow(): BrowserWindow | null {
  * 通用窗口事件处理器
  * 抽象重复的窗口事件处理逻辑
  */
-function setupCommonWindowEvents(window: BrowserWindow, isMainWindow = false, hiddenButtons: string[] = []) {
+function setupCommonWindowEvents(window: BrowserWindow, isMainWindow = false, hiddenControls: readonly HiddenControl[] = []) {
   managedWindows.add(window);
 
   window.on('close', (event) => {
@@ -46,9 +46,9 @@ function setupCommonWindowEvents(window: BrowserWindow, isMainWindow = false, hi
 
   window.webContents.on('dom-ready', () => {
     if (isMainWindow) {
-      injectBaseStyles(window, hiddenButtons);
+      injectBaseStyles(window, hiddenControls);
     } else {
-      injectNewWindowStyles(window, hiddenButtons);
+      injectNewWindowStyles(window, hiddenControls);
       injectNewWindowBehaviors(window);
     }
   });
@@ -81,7 +81,7 @@ function setupCommonWindowEvents(window: BrowserWindow, isMainWindow = false, hi
  * 通用窗口配置
  * 抽象重复的窗口配置选项
  */
-function getCommonWindowConfig(isMainWindow: boolean = false) {
+function getCommonWindowConfig(isMainWindow = false, webSecurity = true) {
   const iconPath = path.join(
     process.env.NODE_ENV === 'development' ? __dirname : app.getAppPath(),
     process.env.NODE_ENV === 'development' ? '../assets/index.ico' : './assets/index.ico'
@@ -95,7 +95,7 @@ function getCommonWindowConfig(isMainWindow: boolean = false) {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
       devTools: false,
-      webSecurity: false
+      webSecurity
     },
     autoHideMenuBar: true,
     frame: false,
@@ -129,37 +129,52 @@ export function getRendererUrl(hash = ''): string {
   return `${baseUrl}${hash}`;
 }
 
-// 加载登录页面
-export function loadLoginPage() {
+// 加载本地启动页面
+export function loadLaunchPage() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   mainWindow.loadURL(getRendererUrl())
-    .catch(error => console.error('加载登录页面失败:', error));
+    .catch(error => console.error('加载启动页面失败:', error));
 }
 
 // 创建主窗口
-export function createWindow(options: WindowOptions = {}, hiddenButtons: string[] = []) {
-  const { startUrl, fullscreen, alwaysOnTop } = options;
+export function createWindow(options: WindowOptions = {}, hiddenControls: readonly HiddenControl[] = []) {
+  const { startUrl, fullscreen, alwaysOnTop, webSecurity = true, singlePage = false } = options;
   const window = new BrowserWindow({
-    ...getCommonWindowConfig(true),
+    ...getCommonWindowConfig(true, webSecurity),
     fullscreen,
     alwaysOnTop,
     kiosk: false,
   });
 
   mainWindow = window;
-  setupCommonWindowEvents(window, true, hiddenButtons);
-  setupNewWindowHandler(window, hiddenButtons);
+  setupCommonWindowEvents(window, true, hiddenControls);
+  setupNewWindowHandler(window, hiddenControls, webSecurity, singlePage);
 
   loadMainWindowContent(startUrl);
   Menu.setApplicationMenu(null);
 }
 
 // 设置新窗口处理
-function setupNewWindowHandler(parentWindow: BrowserWindow, hiddenButtons: string[] = []) {
+function setupNewWindowHandler(
+  parentWindow: BrowserWindow,
+  hiddenControls: readonly HiddenControl[],
+  webSecurity: boolean,
+  singlePage: boolean
+) {
   parentWindow.webContents.setWindowOpenHandler(({ url }) => {
-    const newWindow = new BrowserWindow(getCommonWindowConfig(false));
-    setupCommonWindowEvents(newWindow, false, hiddenButtons);
-    setupNewWindowHandler(newWindow, hiddenButtons);
+    if (!isHttpUrl(url)) {
+      console.warn(`已阻止非 HTTP(S) 子窗口: ${url}`);
+      return { action: 'deny' };
+    }
+
+    if (singlePage) {
+      parentWindow.loadURL(url).catch(error => console.error('单页导航失败:', error));
+      return { action: 'deny' };
+    }
+
+    const newWindow = new BrowserWindow(getCommonWindowConfig(false, webSecurity));
+    setupCommonWindowEvents(newWindow, false, hiddenControls);
+    setupNewWindowHandler(newWindow, hiddenControls, webSecurity, singlePage);
     newWindow.loadURL(url).catch(error => console.error('加载新窗口失败:', error));
     return { action: 'deny' };
   });

@@ -1,53 +1,62 @@
 import { app, session } from 'electron';
-import { loadConfigFile, parseAndMergeConfig } from './app-config';
+import { resolveAppConfig } from './app-config.mts';
 import { createWindow, cleanupWindows, getMainWindow } from './window-manager';
 import { registerIPCHandlers } from './ipc-handlers';
+import type { ResolvedConfig } from '../shared/types.mts';
+
+const RELAXED_CSP = "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: file: *";
 
 // 应用初始化
 export function initializeApp() {
-  // 忽略证书错误
-  app.commandLine.appendSwitch('ignore-certificate-errors');
+  const config = resolveAppConfig(process.argv, app.isPackaged);
+  if (config.compatibilityMode === 'permissive') {
+    app.commandLine.appendSwitch('ignore-certificate-errors');
+  }
   
   // 当Electron完成初始化并准备创建浏览器窗口时调用此方法
   app.whenReady().then(() => {
-    setupSession();
-    startApplication();
+    setupSession(config);
+    startApplication(config);
   }).catch(error => console.error('应用初始化失败:', error));
 
   // 设置应用事件监听
-  setupAppEvents();
+  setupAppEvents(config);
 }
 
 // 设置会话配置
-function setupSession() {
-  // 设置全局会话默认CSS
+function setupSession(config: ResolvedConfig) {
+  if (config.compatibilityMode !== 'permissive') return;
+
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const responseHeaders = Object.fromEntries(
+      Object.entries(details.responseHeaders ?? {})
+        .filter(([name]) => name.toLowerCase() !== 'content-security-policy')
+    );
     callback({
       responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self' 'unsafe-inline' 'unsafe-eval' data: file: *"]
+        ...responseHeaders,
+        'Content-Security-Policy': [RELAXED_CSP]
       }
     });
   });
 }
 
 // 启动应用程序
-function startApplication() {
-  // 首先加载配置文件
-  loadConfigFile();
-  const config = parseAndMergeConfig(process.argv, app.isPackaged);
+function startApplication(config: ResolvedConfig) {
   registerIPCHandlers(config);
   
   // 创建主窗口
   createWindow({
-    startUrl: config.link,
-    fullscreen: config.isFullscreen,
-    alwaysOnTop: config.isPinned
-  }, config.hiddenButtons);
+    startUrl: config.url,
+    fullscreen: config.fullscreen,
+    alwaysOnTop: config.alwaysOnTop,
+    webSecurity: config.compatibilityMode === 'standard',
+    singlePage: config.singlePage
+  }, config.hiddenControls);
 }
 
 // 设置应用事件监听
-function setupAppEvents() {
+function setupAppEvents(config: ResolvedConfig) {
   // 所有窗口关闭时退出应用
   app.on('window-all-closed', () => {
     // 清理窗口资源
@@ -64,7 +73,7 @@ function setupAppEvents() {
     const mainWindow = getMainWindow();
     if (mainWindow === null) {
       // 重新启动应用
-      startApplication();
+      startApplication(config);
     }
   });
 

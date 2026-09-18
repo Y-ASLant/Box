@@ -1,4 +1,6 @@
 // 主题配置文件
+import type { ThemeName } from '../../shared/types.mts';
+
 interface ThemeConfig {
   cssVars: Record<string, string>;
 }
@@ -48,6 +50,6 @@ export const themes = {
       '--scrollbar-track': 'transparent'
     }
   }
-} as const satisfies Record<string, ThemeConfig>;
+} as const satisfies Record<ThemeName, ThemeConfig>;
 
-export type ThemeName = keyof typeof themes;
+export type { ThemeName };

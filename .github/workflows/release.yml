@@ -37,7 +37,7 @@ jobs:
       - name: Validate tag and release notes
         run: pnpm run release:notes "${GITHUB_REF_NAME}" "${RUNNER_TEMP}/release-notes.md"
 
-      - name: Run static checks and renderer build
+      - name: Run tests, static checks, and renderer build
         run: pnpm run build
 
   package:

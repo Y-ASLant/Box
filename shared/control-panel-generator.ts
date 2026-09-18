@@ -1,12 +1,13 @@
 // 控制面板脚本生成器
 // 用于生成注入到页面中的控制面板脚本
+import type { HiddenControl } from './types.mts';
 
 /**
  * 生成控制面板的主脚本
  * @param hiddenButtons 隐藏的按钮列表
  * @returns 完整的控制面板脚本
  */
-export function generateControlPanelScript(hiddenButtons: string[]): string {
+export function generateControlPanelScript(hiddenButtons: readonly HiddenControl[]): string {
   // 如果隐藏列表包含 'control'，则不生成任何控制面板
   if (hiddenButtons.includes('control')) return '';
   
@@ -16,7 +17,7 @@ export function generateControlPanelScript(hiddenButtons: string[]): string {
 /**
  * 简化的控制脚本实现
  */
-function getSimpleControlScript(hiddenButtons: string[]): string {
+function getSimpleControlScript(hiddenButtons: readonly HiddenControl[]): string {
   return `
     const hiddenButtons = ${JSON.stringify(hiddenButtons)};
 

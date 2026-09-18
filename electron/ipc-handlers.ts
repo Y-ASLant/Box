@@ -1,10 +1,10 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import type { IpcMainInvokeEvent } from 'electron';
-import { getAppConfig, getBackgroundPath } from './app-config';
+import { getBackgroundUrl } from './app-config.mts';
 import { injectControlsScript } from './controls-injector';
-import { closeManagedWindow, getMainWindow, getRendererUrl, loadLoginPage } from './window-manager';
-import type { ParsedConfig } from '../shared/types';
-import { normalizeHttpUrl } from '../shared/url';
+import { closeManagedWindow, getMainWindow, getRendererUrl, loadLaunchPage } from './window-manager';
+import type { ResolvedConfig } from '../shared/types.mts';
+import { normalizeHttpUrl } from '../shared/url.mts';
 const HANDLER_CHANNELS = [
   'navigate-to-url',
   'return-to-login',
@@ -37,7 +37,7 @@ function isLocalRendererSender(event: IpcMainInvokeEvent): boolean {
   }
 }
 
-export function registerIPCHandlers(config: ParsedConfig) {
+export function registerIPCHandlers(config: ResolvedConfig) {
   for (const channel of HANDLER_CHANNELS) {
     ipcMain.removeHandler(channel);
   }
@@ -55,7 +55,14 @@ export function registerIPCHandlers(config: ParsedConfig) {
       return false;
     }
 
-    mainWindow.loadURL(normalizeHttpUrl(remoteUrl))
+    let normalizedUrl: string;
+    try {
+      normalizedUrl = normalizeHttpUrl(remoteUrl);
+    } catch {
+      return false;
+    }
+
+    mainWindow.loadURL(normalizedUrl)
       .catch(error => console.error('加载远程URL失败:', error));
     return true;
   });
@@ -64,12 +71,12 @@ export function registerIPCHandlers(config: ParsedConfig) {
     const targetWindow = getTargetWindow(event);
     const mainWindow = getMainWindow();
 
-    if (targetWindow === mainWindow) {
-      if (config.isSinglePageMode) {
-        shell.openPath(app.getPath('home'))
-          .catch(error => console.error('打开用户目录失败:', error));
+    if (targetWindow && targetWindow === mainWindow) {
+      if (config.singlePage && config.url) {
+        mainWindow.loadURL(config.url)
+          .catch(error => console.error('返回配置首页失败:', error));
       } else {
-        loadLoginPage();
+        loadLaunchPage();
       }
       return true;
     }
@@ -114,17 +121,15 @@ export function registerIPCHandlers(config: ParsedConfig) {
 
   ipcMain.handle('get-app-config', (event) => {
     if (!isLocalRendererSender(event)) return {};
-    const fileConfig = getAppConfig();
     return {
-      ...fileConfig,
-      theme: config.theme ?? undefined,
-      hide: config.hide ?? undefined
+      theme: config.theme,
+      hiddenControls: config.hiddenControls
     };
   });
 
   ipcMain.handle('get-background-path', (event) => {
     if (!isLocalRendererSender(event)) return null;
-    return getBackgroundPath(config.bgPath);
+    return getBackgroundUrl(config.backgroundPath);
   });
 
   ipcMain.handle('clear-history-cache', async (event) => {
@@ -145,14 +150,14 @@ export function registerIPCHandlers(config: ParsedConfig) {
         'cachestorage'
       ],
     });
-    loadLoginPage();
+    loadLaunchPage();
     return true;
   });
 
   ipcMain.handle('dom-ready', async (event) => {
     const targetWindow = getTargetWindow(event);
     if (!targetWindow) return false;
-    await injectControlsScript(targetWindow, config.hiddenButtons);
+    await injectControlsScript(targetWindow, config.hiddenControls);
     return true;
   });
 }

@@ -55,10 +55,7 @@ const checkHideStatus = async () => {
   if (window.electronAPI && window.electronAPI.getAppConfig) {
     try {
       const config = await window.electronAPI.getAppConfig();
-      if (config.hide) {
-        const hiddenButtons = config.hide.split(',').map((btn: string) => btn.trim());
-        isHidden.value = hiddenButtons.includes('theme');
-      }
+      isHidden.value = config.hiddenControls.includes('theme');
     } catch (error) {
       console.warn('无法获取应用配置:', error);
     }

@@ -44,5 +44,5 @@ jobs:
           version="$(node -p "require('./package.json').version")"
           pnpm run release:notes "v${version}" "${RUNNER_TEMP}/release-notes.md"
 
-      - name: Run static checks and renderer build
+      - name: Run tests, static checks, and renderer build
         run: pnpm run build
