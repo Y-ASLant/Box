@@ -37,7 +37,12 @@ pnpm check             # strict renderer + Electron/shared/config checks
 pnpm check:node        # Electron/shared/config TypeScript only
 pnpm build             # full checks + renderer bundle
 pnpm build:electron    # full checks + Electron bundle/package
-pnpm build:win         # checked Windows package; mac/linux variants also exist
+pnpm build:win         # checked Windows x64 package
+pnpm build:mac:x64     # checked macOS Intel package
+pnpm build:mac:arm64   # checked macOS Apple Silicon package
+pnpm build:linux:x64   # checked Linux x64 packages
+pnpm build:linux:arm64 # checked Linux arm64 packages
+pnpm release:notes -- v1.0.0 release-notes.md # validate/extract one changelog version
 make build             # checked package; keeps only release files under build/
 make clean             # deletes generated outputs, caches, logs, and temporary files
 make distclean         # make clean plus node_modules/ and repo-local .pnpm-store/
@@ -61,6 +66,9 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 ## Important Files
 
 - `package.json` — scripts, direct dependencies, Electron entry, and electron-builder configuration.
+- `.github/workflows/release.yml` — tag validation, five native package jobs, artifact collection, and GitHub Release publication.
+- `CHANGELOG.md` — bilingual Keep a Changelog release history used verbatim for GitHub Release notes.
+- `scripts/extract-release-notes.mjs` — validates tag/package versions and extracts matching changelog sections.
 - `pnpm-lock.yaml`, `pnpm-workspace.yaml` — reproducible graph, overrides, and allowed dependency build scripts.
 - `vite.config.mts` — renderer-only Vite configuration.
 - `electron.vite.config.mjs` — renderer + Electron main/preload development/build configuration; loading it clears `dist-electron/`.
@@ -78,15 +86,23 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - Vite configs are native-ESM-compatible (`.mts`/`.mjs`). Keep explicit extensions for local ESM imports and use `import.meta.dirname`, not `__dirname`.
 - Keep renderer asset paths relative (`base: './'`) for packaged `file://` loading. `@` resolves to `src/`.
 - Production renderer builds use Terser and drop `console`/`debugger`; do not rely on them for packaged diagnostics.
-- electron-builder packages only `dist/**/*`, `dist-electron/**/*`, and the runtime `assets/index.ico`; README screenshots and source-only icons stay outside `app.asar`. Vue and Vue Router remain dev dependencies because Vite fully bundles them and packaged runtime `node_modules` is intentionally empty. Windows uses x64 NSIS; macOS uses DMG; Linux uses AppImage/deb/rpm for x64 and arm64.
+- electron-builder packages only `dist/**/*`, `dist-electron/**/*`, and the runtime `assets/index.ico`; README screenshots and source-only icons stay outside `app.asar`. Vue and Vue Router remain dev dependencies because Vite fully bundles them and packaged runtime `node_modules` is intentionally empty. Windows uses x64 NSIS; macOS uses DMG for x64 and arm64; Linux uses AppImage/deb/rpm for x64 and arm64. Release filenames include version, platform, and architecture.
 - Electron 44 downloads its platform binary lazily. The `prestart` and `prebuild:electron` hooks run `install-electron --no`, and electron-builder reuses `node_modules/electron/dist` through `electronDist`.
 - `make build` removes `dist/`, `dist-electron/`, unpacked staging directories, builder diagnostics, and updater metadata only after packaging succeeds. Use `pnpm build:electron` when those intermediates are needed for debugging or runtime smoke checks.
 - Supported runtime flags include `-link`, `-mode`, `-window`, `-page`, `-theme`, `-hide`, and `-bg`; hide values are comma-separated.
 
 ## Testing & QA
 
-- No automated tests, test framework, linter, formatter, coverage setup, or repository CI exists. Treat every change as unprotected by regression tests.
+- There is no automated test suite, test framework, linter, formatter, or coverage setup. The release workflow provides static/build/package gates but does not replace manual runtime testing.
 - `pnpm check` is the repository-wide static gate: `vue-tsc` checks `src/**/*`, then `tsc -p tsconfig.node.json` checks Electron, shared code, and Vite configs.
 - For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include URL navigation/load failure, main versus child windows, theme/config precedence, hidden controls, cache/history clearing, fullscreen/top/single-page behavior, custom backgrounds, and `Ctrl + Shift + Alt` control-panel toggling.
 - For packaging changes, use the checked `pnpm build:electron` or the relevant platform script and verify the expected files under `build/`.
 - If adding tests, cover observable boundaries such as IPC validation, configuration precedence, URL normalization, theme persistence, and load-error routing. Introducing a runner/config is a new project-wide convention; keep it minimal and document the command.
+
+## Release & Changelog Conventions
+
+- Releases are triggered only by pushed `v*` or `V*` tags. The tag must be a complete SemVer value and must exactly match `package.json#version`; legacy date-suffixed tags are not accepted by the workflow.
+- `CHANGELOG.md` keeps Simplified Chinese first and English second, following Keep a Changelog headings. Every released version must appear in both language sections as `## [x.y.z] - YYYY-MM-DD`.
+- Release entries describe the final user-visible difference from the previous version. Keep intermediate implementation details and reverted changes out of the changelog.
+- The GitHub Release body is generated by `scripts/extract-release-notes.mjs`; do not maintain a second release-notes file.
+- The release matrix runs Windows x64, macOS x64/arm64, and Linux x64/arm64 on matching native GitHub-hosted runners. All five jobs must succeed before publication.

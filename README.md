@@ -1,5 +1,7 @@
 # Box（浏览器 Plus）
 
+[![Release](https://github.com/Y-ASLant/Box/actions/workflows/release.yml/badge.svg)](https://github.com/Y-ASLant/Box/actions/workflows/release.yml)
+
 Box 是一个面向演示、展厅和固定终端场景的无边框 Electron 浏览器。应用可从本地登录页输入地址，也可通过配置直接加载 HTTP(S) 页面，并为页面提供悬浮窗口控制面板。
 
 ![应用界面](assets/demo.png)
@@ -46,11 +48,13 @@ pnpm build        # 类型检查并构建 renderer
 ```bash
 pnpm build:electron  # 检查并按当前平台打包
 pnpm build:win       # Windows x64 NSIS
-pnpm build:mac       # macOS DMG
-pnpm build:linux     # Linux AppImage、deb 和 rpm
+pnpm build:mac:x64   # macOS Intel DMG
+pnpm build:mac:arm64 # macOS Apple Silicon DMG
+pnpm build:linux:x64 # Linux x64 AppImage、deb 和 rpm
+pnpm build:linux:arm64 # Linux arm64 AppImage、deb 和 rpm
 ```
 
-产物位于 `build/`。也可以使用 Make：
+跨架构命令应在相同 CPU 架构的系统上运行，避免把当前平台的 Electron 运行时装入错误架构的安装包。产物位于 `build/`，文件名包含版本、平台和架构。也可以使用 Make：
 
 ```bash
 make build       # 完整打包，成功后仅保留发布文件
@@ -59,6 +63,30 @@ make distclean   # clean 后继续删除 node_modules 和仓库内 pnpm store
 ```
 
 `dist/`、`dist-electron/` 和解包目录是生成内容，不应手动编辑。
+
+## 发布
+
+推送 `v1.0.0` 或 `V1.0.0` 这类 SemVer 标签会触发 [Release 工作流](.github/workflows/release.yml)。工作流会先确认标签版本与 `package.json` 一致，并检查 [CHANGELOG.md](CHANGELOG.md) 中存在相同版本的中英文条目；全部平台构建成功后，才会创建 GitHub Release。
+
+发布新版本时：
+
+1. 更新 `package.json` 的 `version`。
+2. 将 `CHANGELOG.md` 的未发布内容整理到同一版本号和日期下，中英文部分都要更新。
+3. 完成本地检查后提交代码，再创建并推送标签。
+
+```bash
+pnpm check
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+正式版本会标记为 Latest Release，带预发布后缀的版本（例如 `v1.1.0-beta.1`）会标记为 Pre-release。Release 正文直接取自对应版本的 `CHANGELOG.md`，并附带以下构建产物：
+
+| 平台 | 架构 | 格式 |
+| --- | --- | --- |
+| Windows | x64 | NSIS `.exe` |
+| macOS | x64、arm64 | `.dmg` |
+| Linux | x64、arm64 | `.AppImage`、`.deb`、`.rpm` |
 
 ## 配置
 

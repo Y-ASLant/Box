@@ -23,9 +23,15 @@
     "build": "pnpm run check && vite build",
     "prebuild:electron": "pnpm run electron:install",
     "build:electron": "pnpm run check && vite build --config electron.vite.config.mjs && electron-builder --publish never",
-    "build:win": "pnpm run build:electron --win",
+    "build:win": "pnpm run build:win:x64",
+    "build:win:x64": "pnpm run build:electron --win --x64",
     "build:mac": "pnpm run build:electron --mac",
-    "build:linux": "pnpm run build:electron --linux"
+    "build:mac:x64": "pnpm run build:electron --mac --x64",
+    "build:mac:arm64": "pnpm run build:electron --mac --arm64",
+    "build:linux": "pnpm run build:electron --linux",
+    "build:linux:x64": "pnpm run build:electron --linux --x64",
+    "build:linux:arm64": "pnpm run build:electron --linux --arm64",
+    "release:notes": "node scripts/extract-release-notes.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.3",
@@ -59,14 +65,8 @@
       "zh-CN"
     ],
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
+      "target": "nsis",
+      "artifactName": "${productName}-${version}-windows-${arch}.${ext}",
       "icon": "./assets/index.ico"
     },
     "nsis": {
@@ -83,33 +83,17 @@
     },
     "mac": {
       "target": "dmg",
+      "artifactName": "${productName}-${version}-macos-${arch}.${ext}",
       "icon": "./assets/512x512.png"
     },
     "linux": {
       "icon": "assets",
       "target": [
-        {
-          "target": "AppImage",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "deb",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "rpm",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
+        "AppImage",
+        "deb",
+        "rpm"
       ],
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
       "category": "Utility",
       "maintainer": "ASlant <aslant2002@outlook.com>",
       "vendor": "ASlant",
