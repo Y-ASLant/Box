@@ -2,27 +2,28 @@
 
 ## Project Overview
 
-Box（浏览器Plus）is a compatibility-first, permissive Electron browser for trusted Web applications, intranet systems, device pages, digital signage, and kiosk-like use. It shows a local Vue launch/error UI or loads a configured HTTP(S) page, then injects window controls and application/display behavior into that page.
+Box（浏览器 Plus）is a compatibility-first, permissive Electron browser for trusted Web applications, intranet systems, device pages, digital signage, and kiosk-like use. It shows a local Vue launch/error UI or loads a configured HTTP(S) page, then injects window controls and application/display behavior into that page.
 
 Treat Electron security behavior as load-bearing. The app intentionally disables certificate checks/web security, relaxes CSP, and injects JavaScript into remote content. UI restrictions such as blocked shortcuts and DevTools are not security boundaries.
 
 ## Architecture & Data Flow
 
 - `electron/main.ts` calls `initializeApp()` in `electron/app-lifecycle.ts`.
-- Startup registers session policy, reads optional `process.cwd()/config.json`, merges CLI flags, registers IPC, then creates windows. Config-file values currently override CLI values.
+- Startup registers session policy, reads optional `process.cwd()/config.json`, merges CLI flags, registers IPC, then creates windows. Per field, a non-empty valid config-file value overrides the CLI value; invalid enum values fall back to CLI. If config `hide` contains any valid item, its valid set replaces CLI `hide`.
 - `electron/window-manager.ts` owns the main `BrowserWindow`, local/remote navigation, managed child windows, shortcuts, load failures, and cleanup.
 - The Vue renderer starts at `src/main.ts`. `src/views/Login.vue` sends a URL through `window.electronAPI`; preload forwards it to `electron/ipc-handlers.ts`, which calls `BrowserWindow.loadURL()`.
 - Privileged flow must remain: Vue component/composable → typed `window.electronAPI` in `src/vite-env.d.ts` → fixed bridge method/channel in `electron/preload.ts` → handler in `electron/ipc-handlers.ts` → Electron operation.
 - Remote-page controls flow through `shared/control-panel-generator.ts` → `electron/controls-injector.ts` → injected DOM/script → `postMessage` → preload → IPC.
-- Load failures route to the local hash route `/error`. New-window requests are denied by default and replaced with a managed child `BrowserWindow`.
-- Main-process state is module-scoped where ownership is singular (`appConfig`, the main window, and the managed-window set). Renderer state uses Vue `ref`/`computed`; shared theme state lives in `useTheme.ts`; persisted keys are `theme` and `recentUrls`.
+- Load failures route to the local hash route `/error`. New-window requests are denied by default and replaced with a recursively managed child `BrowserWindow`.
+- Main-process state is module-scoped where ownership is singular (`appConfig`, the main window, the managed-window set, and the close allowlist). Renderer state uses Vue `ref`/`computed`; shared theme state lives in `useTheme.ts`; persisted keys are `theme` and `recentUrls`. Clearing history/cache clears session cookies and site storage as well as both local keys.
+- `page=single` is a legacy behavior name, not a navigation or popup restriction: it makes the main-window home action open `app.getPath('home')`. `page=multi` returns the main window to the local launch page. A child-window home action closes that child in either mode.
 
 ## Key Directories
 
-- `src/` — Vue 3 renderer: local login/error views, router, theme composable, components, global styles.
+- `src/` — Vue 3 renderer: local launch/error views, router, theme composable, components, global styles.
 - `electron/` — privileged main/preload code: lifecycle, BrowserWindows, IPC, configuration, session setup, and page injection.
 - `shared/` — cross-boundary types, URL normalization, generated control-panel script, and injectable CSS.
-- `assets/` — packaged icons and README screenshots.
+- `assets/` — build-time application icons and the README screenshot; only `assets/index.ico` is copied into the packaged application files.
 - `dist/`, `dist-electron/`, `build/` — generated outputs; never hand-edit or treat as source.
 
 ## Development Commands
@@ -38,8 +39,11 @@ pnpm check:node        # Electron/shared/config TypeScript only
 pnpm build             # full checks + renderer bundle
 pnpm build:electron    # full checks + Electron bundle/package
 pnpm build:win         # checked Windows x64 package
+pnpm build:win:x64     # explicit Windows x64 package
+pnpm build:mac         # checked macOS package for the current/default architecture
 pnpm build:mac:x64     # checked macOS Intel package
 pnpm build:mac:arm64   # checked macOS Apple Silicon package
+pnpm build:linux       # checked Linux packages for the current/default architecture
 pnpm build:linux:x64   # checked Linux x64 packages
 pnpm build:linux:arm64 # checked Linux arm64 packages
 pnpm release:notes v1.0.0 release-notes.md # validate/extract one changelog version
@@ -67,7 +71,7 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 
 - `package.json` — scripts, direct dependencies, Electron entry, and electron-builder configuration.
 - `.github/workflows/ci.yml` — push/PR/manual workflow and application validation.
-- `.github/workflows/package-test.yml` — manual five-platform packaging without publishing a release.
+- `.github/workflows/package-test.yml` — manual packaging for five native platform/architecture targets without publishing a release.
 - `.github/workflows/release.yml` — tag validation, five native package jobs, artifact collection, and GitHub Release publication.
 - `CHANGELOG.md` — bilingual Keep a Changelog release history used verbatim for GitHub Release notes.
 - `scripts/extract-release-notes.mjs` — validates tag/package versions and extracts matching changelog sections.
@@ -91,13 +95,13 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - electron-builder packages only `dist/**/*`, `dist-electron/**/*`, and the runtime `assets/index.ico`; README screenshots and source-only icons stay outside `app.asar`. Vue and Vue Router remain dev dependencies because Vite fully bundles them and packaged runtime `node_modules` is intentionally empty. Windows uses x64 NSIS; macOS uses DMG for x64 and arm64; Linux uses AppImage/deb/rpm for x64 and arm64. Release filenames include version, platform, and architecture.
 - Electron 44 downloads its platform binary lazily. The `prestart` and `prebuild:electron` hooks run `install-electron --no`, and electron-builder reuses `node_modules/electron/dist` through `electronDist`.
 - `make build` removes `dist/`, `dist-electron/`, unpacked staging directories, builder diagnostics, and updater metadata only after packaging succeeds. Use `pnpm build:electron` when those intermediates are needed for debugging or runtime smoke checks.
-- Supported runtime flags include `-link`, `-mode`, `-window`, `-page`, `-theme`, `-hide`, and `-bg`; hide values are comma-separated.
+- Supported runtime flags are the case-sensitive `-link`, `-mode`, `-window`, `-page`, `-theme`, `-hide`, and `-bg`; hide values are comma-separated. Missing protocols are normalized to `http://`. `mode`, `window`, `page`, and `theme` accept only the values documented in `electron/app-config.ts`.
 
 ## Testing & QA
 
 - There is no automated test suite, test framework, linter, formatter, or coverage setup. CI validates workflows, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
 - `pnpm check` is the repository-wide static gate: `vue-tsc` checks `src/**/*`, then `tsc -p tsconfig.node.json` checks Electron, shared code, and Vite configs.
-- For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include URL navigation/load failure, main versus child windows, theme/config precedence, hidden controls, cache/history clearing, fullscreen/top/single-page behavior, custom backgrounds, and `Ctrl + Shift + Alt` control-panel toggling.
+- For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include URL navigation/load failure, main versus child windows, valid and invalid config/CLI precedence, hidden controls, session/cache clearing, fullscreen/always-on-top/home-button behavior, custom backgrounds, and `Ctrl + Shift + Alt` control-panel toggling.
 - For packaging changes, use the checked `pnpm build:electron` or the relevant platform script and verify the expected files under `build/`.
 - Before moving a release tag, run Package Test manually from GitHub Actions when packaging or dependency behavior has changed.
 - If adding tests, cover observable boundaries such as IPC validation, configuration precedence, URL normalization, theme persistence, and load-error routing. Introducing a runner/config is a new project-wide convention; keep it minimal and document the command.
@@ -108,4 +112,4 @@ There are no `test`, `lint`, `format`, or coverage commands. Do not invent or cl
 - `CHANGELOG.md` keeps Simplified Chinese first and English second, following Keep a Changelog headings. Every released version must appear in both language sections as `## [x.y.z] - YYYY-MM-DD`.
 - Release entries describe the final user-visible difference from the previous version. Keep intermediate implementation details and reverted changes out of the changelog.
 - The GitHub Release body is generated by `scripts/extract-release-notes.mjs`; do not maintain a second release-notes file.
-- The release matrix runs Windows x64, macOS x64/arm64, and Linux x64/arm64 on matching native GitHub-hosted runners. All five jobs must succeed before publication.
+- The release matrix runs Windows x64, macOS x64/arm64, and Linux x64/arm64 on matching native GitHub-hosted runners. All five platform/architecture jobs must succeed before publication.
