@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { Search, Trash } from '@lucide/vue';
 import { normalizeHttpUrl } from '../../shared/url.mts';
 
 const emit = defineEmits<{ navigate: [url: string] }>();
@@ -83,7 +84,7 @@ const hostInitial = (url: string) => displayHost(url).charAt(0).toUpperCase() ||
       <p class="hero-copy">打开 Web 应用、内网地址或设备管理页面</p>
 
       <form class="launch-form" @submit.prevent="openUrl()">
-        <span class="search-mark" aria-hidden="true">⌕</span>
+        <Search class="search-mark" :size="18" :stroke-width="1.8" aria-hidden="true" />
         <input
           v-model="remoteUrl"
           type="text"
@@ -100,7 +101,10 @@ const hostInitial = (url: string) => displayHost(url).charAt(0).toUpperCase() ||
       <div v-if="recentUrls.length" class="recent-section">
         <div class="section-heading">
           <h2>最近访问</h2>
-          <button class="clear-button" type="button" @click="clearHistory">清除记录</button>
+          <button class="clear-button" type="button" @click="clearHistory">
+            <Trash :size="14" :stroke-width="1.8" aria-hidden="true" />
+            清除记录
+          </button>
         </div>
         <div class="recent-grid">
           <button v-for="url in recentUrls" :key="url" class="recent-item" type="button" @click="openUrl(url)">
@@ -165,7 +169,7 @@ h1 { margin: 0; font-size: clamp(30px, 4vw, 42px); letter-spacing: -0.045em; }
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 .launch-form:focus-within { border-color: #7482ee; box-shadow: 0 16px 44px var(--shadow-light), 0 0 0 4px rgba(99, 115, 230, 0.12); }
-.search-mark { color: var(--text-tertiary); font-size: 24px; }
+.search-mark { flex: 0 0 18px; color: var(--text-tertiary); }
 .launch-form input {
   min-width: 0;
   flex: 1;
@@ -196,6 +200,9 @@ h1 { margin: 0; font-size: clamp(30px, 4vw, 42px); letter-spacing: -0.045em; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .section-heading h2 { margin: 0; font-size: 14px; font-weight: 680; letter-spacing: 0.01em; }
 .clear-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 0;
   color: var(--text-tertiary);
   background: transparent;

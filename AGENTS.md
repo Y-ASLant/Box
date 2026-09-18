@@ -57,6 +57,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 ## Code Conventions & Common Patterns
 
 - Vue files use `<script setup lang="ts">`, Composition API primitives, scoped CSS, and hash-router navigation.
+- Use `@lucide/vue` for interface icons. Import individual icon components for tree-shaking; do not substitute Unicode symbols, emoji, handwritten SVG, or a dynamic all-icons registry.
 - Use two-space indentation. Existing TypeScript generally uses single quotes and semicolons, though formatting is not fully uniform and no formatter enforces it.
 - Use camelCase for functions/variables, `handle…` for handlers, `use…` for composables, PascalCase for types/components, and `SCREAMING_SNAKE_CASE` for generator constants.
 - TypeScript implementation files use kebab-case (`window-manager.ts`); Vue components/views use PascalCase (`ThemeToggle.vue`, `Login.vue`).

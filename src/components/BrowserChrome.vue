@@ -1,5 +1,21 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Copy,
+  Globe,
+  House,
+  LoaderCircle,
+  LockKeyhole,
+  Minus,
+  Moon,
+  Plus,
+  RotateCw,
+  Square,
+  Sun,
+  X
+} from '@lucide/vue';
 import type { BrowserState } from '../../shared/types.mts';
 import { useTheme } from '../composables/useTheme';
 
@@ -78,42 +94,66 @@ defineExpose({ focusAddress });
           @click="emit('activateTab', tab.id)"
           @keydown.enter="emit('activateTab', tab.id)"
         >
-          <span v-if="tab.loading" class="tab-loader" aria-hidden="true"></span>
-          <span v-else class="tab-favicon">{{ tab.url ? '●' : '＋' }}</span>
+          <LoaderCircle v-if="tab.loading" class="tab-loader" :size="16" :stroke-width="1.9" aria-hidden="true" />
+          <Globe v-else-if="tab.url" class="tab-favicon" :size="16" :stroke-width="1.9" aria-hidden="true" />
+          <Plus v-else class="tab-favicon" :size="16" :stroke-width="1.9" aria-hidden="true" />
           <span class="tab-title">{{ tab.title }}</span>
           <button
             class="tab-close"
             aria-label="关闭标签页"
             @click.stop="emit('closeTab', tab.id)"
-          >×</button>
+          ><X :size="15" :stroke-width="2" aria-hidden="true" /></button>
         </div>
       </div>
-      <button class="new-tab-button" aria-label="新建标签页" title="新建标签页 (Ctrl+T)" @click="emit('createTab')">＋</button>
+      <button class="new-tab-button" aria-label="新建标签页" title="新建标签页 (Ctrl+T)" @click="emit('createTab')">
+        <Plus :size="18" :stroke-width="1.8" aria-hidden="true" />
+      </button>
       <div class="tab-strip-spacer"></div>
       <div class="window-controls" aria-label="窗口控制">
-        <button class="window-button" aria-label="最小化" title="最小化" @click="minimizeWindow">—</button>
+        <button class="window-button" aria-label="最小化" title="最小化" @click="minimizeWindow">
+          <Minus :size="16" :stroke-width="1.7" aria-hidden="true" />
+        </button>
         <button
           class="window-button maximize-button"
           :aria-label="isMaximized ? '还原' : '最大化'"
           :title="isMaximized ? '还原' : '最大化'"
           @click="toggleMaximizeWindow"
-        >{{ isMaximized ? '❐' : '□' }}</button>
-        <button class="window-button close-button" aria-label="关闭" title="关闭" @click="closeWindow">×</button>
+        >
+          <Copy v-if="isMaximized" :size="14" :stroke-width="1.7" aria-hidden="true" />
+          <Square v-else :size="14" :stroke-width="1.7" aria-hidden="true" />
+        </button>
+        <button class="window-button close-button" aria-label="关闭" title="关闭" @click="closeWindow">
+          <X :size="17" :stroke-width="1.7" aria-hidden="true" />
+        </button>
       </div>
     </div>
 
     <div class="navigation-bar">
       <nav class="navigation-actions" aria-label="网页导航">
-        <button class="icon-button" :disabled="!activeTab?.canGoBack" aria-label="后退" @click="emit('goBack')">←</button>
-        <button class="icon-button" :disabled="!activeTab?.canGoForward" aria-label="前进" @click="emit('goForward')">→</button>
-        <button class="icon-button reload-button" aria-label="刷新或停止" @click="emit('reload')">
-          {{ activeTab?.loading ? '×' : '↻' }}
+        <button class="icon-button" :disabled="!activeTab?.canGoBack" aria-label="后退" @click="emit('goBack')">
+          <ArrowLeft :size="19" :stroke-width="1.8" aria-hidden="true" />
         </button>
-        <button class="icon-button home-button" aria-label="新标签页" @click="emit('home')">⌂</button>
+        <button class="icon-button" :disabled="!activeTab?.canGoForward" aria-label="前进" @click="emit('goForward')">
+          <ArrowRight :size="19" :stroke-width="1.8" aria-hidden="true" />
+        </button>
+        <button class="icon-button reload-button" aria-label="刷新或停止" @click="emit('reload')">
+          <X v-if="activeTab?.loading" :size="18" :stroke-width="1.8" aria-hidden="true" />
+          <RotateCw v-else :size="18" :stroke-width="1.8" aria-hidden="true" />
+        </button>
+        <button class="icon-button home-button" aria-label="新标签页" @click="emit('home')">
+          <House :size="18" :stroke-width="1.8" aria-hidden="true" />
+        </button>
       </nav>
 
       <form class="address-form" @submit.prevent="submitAddress">
-        <span class="site-indicator" :class="{ secure: activeTab?.url?.startsWith('https://') }" aria-hidden="true"></span>
+        <LockKeyhole
+          v-if="activeTab?.url?.startsWith('https://')"
+          class="site-indicator secure"
+          :size="15"
+          :stroke-width="1.8"
+          aria-hidden="true"
+        />
+        <Globe v-else class="site-indicator" :size="15" :stroke-width="1.8" aria-hidden="true" />
         <input
           ref="addressInput"
           v-model="address"
@@ -133,7 +173,10 @@ defineExpose({ focusAddress });
         :aria-label="isDarkMode() ? '切换到浅色模式' : '切换到深色模式'"
         :title="isDarkMode() ? '浅色模式' : '深色模式'"
         @click="toggleTheme"
-      >{{ isDarkMode() ? '☀' : '◐' }}</button>
+      >
+        <Sun v-if="isDarkMode()" :size="18" :stroke-width="1.8" aria-hidden="true" />
+        <Moon v-else :size="18" :stroke-width="1.8" aria-hidden="true" />
+      </button>
     </div>
   </header>
 </template>
@@ -200,21 +243,12 @@ defineExpose({ focusAddress });
 .browser-tab:hover { background: var(--tab-hover); }
 .browser-tab.active { color: var(--chrome-text); background: var(--chrome-bg); }
 .tab-favicon {
-  display: grid;
   flex: 0 0 18px;
-  width: 18px;
-  height: 18px;
-  place-items: center;
   color: #5f6ee8;
-  font-size: 11px;
 }
 .tab-loader {
   flex: 0 0 16px;
-  width: 16px;
-  height: 16px;
-  border: 2px solid color-mix(in srgb, var(--chrome-muted) 25%, transparent);
-  border-top-color: #5b6ee1;
-  border-radius: 50%;
+  color: #5b6ee1;
   animation: spin 800ms linear infinite;
 }
 .tab-title {
@@ -238,8 +272,6 @@ defineExpose({ focusAddress });
   border-radius: 6px;
   color: inherit;
   background: transparent;
-  font-size: 17px;
-  line-height: 1;
   cursor: pointer;
 }
 .tab-close:hover { background: var(--control-hover); }
@@ -259,7 +291,6 @@ defineExpose({ focusAddress });
   height: 32px;
   margin: 0 0 2px 2px;
   border-radius: 8px;
-  font-size: 20px;
   -webkit-app-region: no-drag;
 }
 .new-tab-button:hover,
@@ -282,13 +313,10 @@ defineExpose({ focusAddress });
   border: 0;
   color: var(--chrome-muted);
   background: transparent;
-  font: 500 16px/1 inherit;
   cursor: pointer;
   transition: color 120ms ease, background 120ms ease;
 }
 .window-button:hover { color: var(--chrome-text); background: var(--control-hover); }
-.maximize-button { font-size: 17px; }
-.close-button { font-size: 20px; }
 .close-button:hover { color: #fff; background: #e5484d; }
 .navigation-bar {
   display: flex;
@@ -303,12 +331,9 @@ defineExpose({ focusAddress });
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  font-size: 20px;
 }
 .icon-button:disabled { opacity: 0.32; cursor: default; }
-.reload-button { font-size: 22px; }
-.home-button { font-size: 21px; }
-.theme-button { flex: 0 0 38px; font-size: 19px; }
+.theme-button { flex: 0 0 38px; }
 .address-form {
   display: flex;
   align-items: center;
@@ -328,14 +353,10 @@ defineExpose({ focusAddress });
   box-shadow: 0 0 0 3px rgba(93, 111, 226, 0.13);
 }
 .site-indicator {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
-  border-radius: 50%;
-  background: #a7afbf;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #a7afbf 18%, transparent);
+  flex: 0 0 15px;
+  color: #8b94a5;
 }
-.site-indicator.secure { background: #34a36f; box-shadow: 0 0 0 3px rgba(52, 163, 111, 0.15); }
+.site-indicator.secure { color: #2f9565; }
 .address-input {
   min-width: 0;
   width: 100%;
