@@ -8,7 +8,7 @@ CACHE_OUTPUTS := node_modules/.vite node_modules/.cache
 LOG_OUTPUTS := logs
 
 .DEFAULT_GOAL := build
-.PHONY: build clean clear distclean
+.PHONY: build clean distclean
 
 # 类型检查、构建并打包应用，输出到 build/
 build:
@@ -22,9 +22,6 @@ clean:
 	@$(REMOVE) $(BUILD_OUTPUTS) $(CACHE_OUTPUTS) $(LOG_OUTPUTS)
 	@$(NODE) -e "const { readdirSync, rmSync } = require('node:fs'); for (const entry of readdirSync('.', { withFileTypes: true })) if (entry.isFile() && (/\.(?:log|tmp|temp|tsbuildinfo)$$/.test(entry.name) || entry.name.startsWith('pnpm-debug.log'))) rmSync(entry.name, { force: true });"
 	@$(NODE) -e "console.log('Clean complete.')"
-
-# 兼容旧命令
-clear: clean
 
 # 恢复到仅保留源码和锁文件的状态
 distclean: clean

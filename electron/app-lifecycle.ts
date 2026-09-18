@@ -1,4 +1,4 @@
-import { app, globalShortcut, session, protocol } from 'electron';
+import { app, session } from 'electron';
 import { loadConfigFile, parseAndMergeConfig } from './app-config';
 import { createWindow, cleanupWindows, getMainWindow } from './window-manager';
 import { registerIPCHandlers } from './ipc-handlers';
@@ -10,27 +10,12 @@ export function initializeApp() {
   
   // 当Electron完成初始化并准备创建浏览器窗口时调用此方法
   app.whenReady().then(() => {
-    setupProtocols();
     setupSession();
     startApplication();
-  });
+  }).catch(error => console.error('应用初始化失败:', error));
 
   // 设置应用事件监听
   setupAppEvents();
-}
-
-// 设置自定义协议
-function setupProtocols() {
-  // 注册自定义协议处理本地文件
-  protocol.registerFileProtocol('local-file', (request, callback) => {
-    const filePath = request.url.replace('local-file://', '');
-    try {
-      return callback(decodeURI(filePath));
-    } catch (error) {
-      console.error('协议处理错误:', error);
-      return callback("");
-    }
-  });
 }
 
 // 设置会话配置
@@ -40,7 +25,7 @@ function setupSession() {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self' 'unsafe-inline' 'unsafe-eval' data: local-file: file: *"]
+        'Content-Security-Policy': ["default-src 'self' 'unsafe-inline' 'unsafe-eval' data: file: *"]
       }
     });
   });
@@ -83,8 +68,4 @@ function setupAppEvents() {
     }
   });
 
-  // 应用程序将要退出时，注销快捷键
-  app.on('will-quit', () => {
-    globalShortcut.unregisterAll();
-  });
 }

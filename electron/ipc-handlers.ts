@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import type { IpcMainInvokeEvent } from 'electron';
 import { getAppConfig, getBackgroundPath } from './app-config';
 import { injectControlsScript } from './controls-injector';
-import { getMainWindow, loadLoginPage } from './window-manager';
+import { closeManagedWindow, getMainWindow, getRendererUrl, loadLoginPage } from './window-manager';
 import type { ParsedConfig } from '../shared/types';
 import { normalizeHttpUrl } from '../shared/url';
 const HANDLER_CHANNELS = [
@@ -24,6 +24,19 @@ function getTargetWindow(event: IpcMainInvokeEvent): BrowserWindow | null {
   return targetWindow && !targetWindow.isDestroyed() ? targetWindow : null;
 }
 
+function isLocalRendererSender(event: IpcMainInvokeEvent): boolean {
+  try {
+    if (!event.senderFrame) return false;
+    const senderUrl = new URL(event.senderFrame.url);
+    const rendererUrl = new URL(getRendererUrl());
+    return senderUrl.protocol === rendererUrl.protocol
+      && senderUrl.host === rendererUrl.host
+      && senderUrl.pathname === rendererUrl.pathname;
+  } catch {
+    return false;
+  }
+}
+
 export function registerIPCHandlers(config: ParsedConfig) {
   for (const channel of HANDLER_CHANNELS) {
     ipcMain.removeHandler(channel);
@@ -37,6 +50,7 @@ export function registerIPCHandlers(config: ParsedConfig) {
       || !mainWindow
       || mainWindow.isDestroyed()
       || getTargetWindow(event) !== mainWindow
+      || !isLocalRendererSender(event)
     ) {
       return false;
     }
@@ -61,9 +75,7 @@ export function registerIPCHandlers(config: ParsedConfig) {
     }
 
     if (targetWindow) {
-      targetWindow.removeAllListeners('close');
-      targetWindow.close();
-      return true;
+      return closeManagedWindow(targetWindow);
     }
     return false;
   });
@@ -89,9 +101,7 @@ export function registerIPCHandlers(config: ParsedConfig) {
   ipcMain.handle('close-window', (event) => {
     const targetWindow = getTargetWindow(event);
     if (!targetWindow) return false;
-    targetWindow.removeAllListeners('close');
-    targetWindow.close();
-    return true;
+    return closeManagedWindow(targetWindow);
   });
 
   ipcMain.handle('toggle-fullscreen', (event) => {
@@ -102,18 +112,23 @@ export function registerIPCHandlers(config: ParsedConfig) {
     return nextFullscreen;
   });
 
-  ipcMain.handle('get-app-config', () => {
+  ipcMain.handle('get-app-config', (event) => {
+    if (!isLocalRendererSender(event)) return {};
     const fileConfig = getAppConfig();
     return {
       ...fileConfig,
-      theme: config.theme ?? fileConfig.theme,
-      hide: config.hide ?? fileConfig.hide
+      theme: config.theme ?? undefined,
+      hide: config.hide ?? undefined
     };
   });
 
-  ipcMain.handle('get-background-path', () => getBackgroundPath(config.bgPath));
+  ipcMain.handle('get-background-path', (event) => {
+    if (!isLocalRendererSender(event)) return null;
+    return getBackgroundPath(config.bgPath);
+  });
 
-  ipcMain.handle('clear-history-cache', async () => {
+  ipcMain.handle('clear-history-cache', async (event) => {
+    if (!isLocalRendererSender(event)) return false;
     const mainWindow = getMainWindow();
     if (!mainWindow || mainWindow.isDestroyed()) return false;
 

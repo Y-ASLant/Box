@@ -2,40 +2,41 @@
   "name": "box",
   "private": true,
   "version": "1.0.0",
-  "description": "一个专用于web演示的Electron应用",
+  "description": "一个专用于 Web 演示的 Electron 应用",
   "author": "ASlant <aslant2002@outlook.com>",
   "license": "MIT",
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "pnpm@12.4.2",
   "engines": {
     "node": ">=22.12.0",
-    "pnpm": ">=12.3.4"
+    "pnpm": ">=12.4.2"
   },
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
+    "electron:install": "install-electron --no",
+    "prestart": "pnpm run electron:install",
     "start": "pnpm run electron:dev",
     "electron:dev": "vite --config electron.vite.config.mjs",
     "preview": "vite preview",
     "check": "vue-tsc && pnpm run check:node",
     "check:node": "tsc -p tsconfig.node.json",
     "build": "pnpm run check && vite build",
-    "build:no-check": "vite build",
+    "prebuild:electron": "pnpm run electron:install",
     "build:electron": "pnpm run check && vite build --config electron.vite.config.mjs && electron-builder --publish never",
-    "build:electron-fast": "vite build --config electron.vite.config.mjs && electron-builder --publish never",
     "build:win": "pnpm run build:electron --win",
     "build:mac": "pnpm run build:electron --mac",
     "build:linux": "pnpm run build:electron --linux"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
-    "@vitejs/plugin-vue": "^6.0.8",
-    "electron": "^44.2.0",
+    "@types/node": "^22.20.3",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "electron": "^44.4.1",
     "electron-builder": "^26.15.3",
     "terser": "^5.51.2",
-    "typescript": "^5.9.0",
-    "vite": "^8.2.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0",
     "vite-plugin-electron": "^1.1.2",
-    "vue": "^3.5.42",
+    "vue": "^3.5.43",
     "vue-router": "^5.3.1",
     "vue-tsc": "^3.3.11"
   },
@@ -50,6 +51,7 @@
       "dist-electron/**/*",
       "assets/index.ico"
     ],
+    "electronDist": "node_modules/electron/dist",
     "compression": "maximum",
     "asar": true,
     "removePackageScripts": true,
@@ -81,7 +83,7 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "./assets/index.ico"
+      "icon": "./assets/512x512.png"
     },
     "linux": {
       "icon": "assets",
@@ -112,7 +114,7 @@
       "maintainer": "ASlant <aslant2002@outlook.com>",
       "vendor": "ASlant",
       "synopsis": "Box",
-      "description": "一个专用于web演示的Electron应用."
+      "description": "一个专用于 Web 演示的 Electron 应用。"
     }
   }
 }

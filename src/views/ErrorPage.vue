@@ -15,13 +15,15 @@ const props = defineProps<ErrorPageProps>();
 
 const router = useRouter();
 
-const handleAction = () => {
+const handleAction = async () => {
   if (props.isSubWindow) {
-    // 如果是子窗口，直接关闭
-    window.close();
+    if (window.electronAPI) {
+      await window.electronAPI.closeWindow();
+    } else {
+      window.close();
+    }
   } else {
-    // 如果是主窗口，返回主页
-    router.push('/');
+    await router.push('/');
   }
 };
 </script>

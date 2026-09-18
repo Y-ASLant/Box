@@ -175,7 +175,10 @@ function getSimpleControlScript(hiddenButtons: string[]): string {
     document.addEventListener('click', (e) => {
       if (isProcessingAction) return;
       if (controlsElement && isVisible) {
-        if (!controlsElement.contains(e.target) && !e.target.classList.contains('drag-region')) {
+        const target = e.target;
+        if (target instanceof Element
+          && !controlsElement.contains(target)
+          && !target.classList.contains('drag-region')) {
           isVisible = false;
           controlsElement.style.display = 'none';
           if (dragRegionElement) {

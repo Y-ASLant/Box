@@ -1,194 +1,134 @@
-# 浏览器Plus
+# Box（浏览器 Plus）
 
-一个基于 Electron 的增强型浏览器应用，提供无边框设计和悬浮式控制面板，为特定场景(演示)优化。
+Box 是一个面向演示、展厅和固定终端场景的无边框 Electron 浏览器。应用可从本地登录页输入地址，也可通过配置直接加载 HTTP(S) 页面，并为页面提供悬浮窗口控制面板。
 
-## 演示截图
+![应用界面](assets/demo.png)
 
-![功能演示1](assets/demo1.png)
+## 功能
 
-![功能演示2](assets/demo2.png)
+- 无边框主窗口和悬浮控制面板
+- 全屏、置顶和单页运行模式
+- 主窗口与受管子窗口
+- 浅色、深色和系统主题
+- 最近访问地址与缓存清理
+- 可配置背景、滚动条、鼠标和控制按钮
+- URL 加载失败时显示本地错误页
 
-![应用主界面](assets/demo.png)
+> [!IMPORTANT]
+> Box 面向受控展示环境，并默认信任加载的远程页面。应用会忽略证书错误、关闭 Electron Web Security、放宽 CSP，并向远程页面注入窗口控制能力。不要用它浏览不可信网站，也不要把这些 UI 限制视为安全边界。
 
-## 主要特性
+## 环境要求
 
-- 屏蔽调试模式
-- 屏蔽快捷键
-- 屏蔽Alt+F4关闭窗口
-- 屏蔽鼠标文字选中
-- 屏蔽鼠标右键菜单
-- 美化滚动条
-- 无边框设计+悬浮式控制面板
-- 去除SSL警告
-- 支持本地配置文件
-
-## 部署
-
-本项目使用 `electron-builder` 进行打包。
-
-### 环境准备
-
-请使用 Node.js 22.12+ 和 pnpm 12.3.4（可通过 `corepack enable pnpm` 启用）：
+- Node.js 22.12 或更高版本
+- pnpm 12.4.2 或更高版本
 
 ```bash
+corepack enable pnpm
 pnpm install
-pnpm start          # Electron 开发模式
-pnpm run check      # 检查 renderer、Electron、shared 和构建配置
-pnpm run build      # 检查并构建 renderer
 ```
 
-### 打包命令
+## 开发
 
 ```bash
-pnpm run build:electron  # 检查并打包，保留中间目录便于调试
-make build               # 检查并打包，仅保留 build/ 中的发布文件
-make clean               # 清理构建产物、缓存、日志和临时文件
-make distclean           # 在 clean 基础上删除 node_modules 和本地 pnpm store
+pnpm start        # 启动 Electron 开发模式
+pnpm dev          # 仅启动 Vue/Vite renderer
+pnpm preview      # 预览 renderer 生产构建
+pnpm check        # 检查 renderer、Electron、shared 和构建配置
+pnpm build        # 类型检查并构建 renderer
 ```
 
-`dist/`、`dist-electron/` 和 `build/*-unpacked/` 是打包过程使用的中间目录。`make build` 仅在打包成功后删除这些目录；构建失败时会保留现场便于排查。
+`pnpm start` 和 Electron 打包命令会按需准备当前平台的 Electron 运行时，首次执行需要联网下载。
 
-需要跳过类型检查时可使用 `pnpm run build:electron-fast`。
+项目当前没有自动化测试、lint 或格式化命令，`pnpm check` 是提交前的静态检查入口。
 
-您可以根据目标平台运行以下命令：
+## 打包
 
-- **打包为 Windows 应用:**
-  ```bash
-  pnpm run build:win
-  ```
+```bash
+pnpm build:electron  # 检查并按当前平台打包
+pnpm build:win       # Windows x64 NSIS
+pnpm build:mac       # macOS DMG
+pnpm build:linux     # Linux AppImage、deb 和 rpm
+```
 
-- **打包为 macOS 应用:**
-  ```bash
-  pnpm run build:mac
-  ```
+产物位于 `build/`。也可以使用 Make：
 
-- **打包为 Linux 应用:**
-  ```bash
-  pnpm run build:linux
-  ```
+```bash
+make build       # 完整打包，成功后仅保留发布文件
+make clean       # 删除构建产物、缓存、日志和临时文件
+make distclean   # clean 后继续删除 node_modules 和仓库内 pnpm store
+```
 
-打包后的文件将位于 `build` 目录下。
+`dist/`、`dist-electron/` 和解包目录是生成内容，不应手动编辑。
 
-## 使用说明
+## 配置
 
-### 配置文件
+应用启动时读取当前工作目录中的 `config.json`。配置文件优先于命令行参数，未配置的项目使用默认值。
 
-您可以在应用程序根目录创建一个 `config.json` 文件来配置应用的启动行为。配置文件中的设置将优先于命令行参数。
-
-配置文件示例：
 ```json
 {
-  "link": "asdasd.com",
+  "link": "https://example.com",
   "mode": "fullscreen",
   "window": "top",
   "page": "single",
-  "hide": "home,close",
+  "theme": "dark",
+  "hide": "home,close,scroll",
   "bg": "C:/path/to/background.jpg"
 }
 ```
 
-## 📋 所有支持的配置项
+| 配置字段 | 命令行参数 | 可用值 | 说明 |
+| --- | --- | --- | --- |
+| `link` | `-link=<url>` | HTTP(S) 地址、域名或 IP | 启动后直接加载页面 |
+| `mode` | `-mode=<mode>` | `fullscreen`、`normal` | 窗口模式 |
+| `window` | `-window=<type>` | `top`、`normal` | 是否始终置顶 |
+| `page` | `-page=<type>` | `single`、`multi` | 单页模式下主页按钮打开用户目录 |
+| `theme` | `-theme=<theme>` | `light`、`dark` | 本地页面主题 |
+| `hide` | `-hide=<items>` | 见下表 | 逗号分隔的隐藏项 |
+| `bg` | `-bg=<path>` | 本地文件路径 | 登录页背景图片；相对路径基于当前工作目录 |
 
-| 配置项 | 命令行参数 | 配置文件字段 | 说明 | 示例值 |
-|--------|------------|-------------|------|--------|
-| 启动链接 | `-link=<url>` | `"link": "<url>"` | 指定启动时加载的URL | `"https://www.bing.com"` |
-| 窗口模式 | `-mode=<mode>` | `"mode": "<mode>"` | 设置窗口模式 | `"fullscreen"` |
-| 窗口置顶 | `-window=<type>` | `"window": "<type>"` | 使窗口保持在最顶层 | `"top"` |
-| 页面模式 | `-page=<type>` | `"page": "<type>"` | 启用单页模式 | `"single"` |
-| 主题设置 | `-theme=<theme>` | `"theme": "<theme>"` | 设置深色/浅色主题 | `"dark"`, `"light"` |
-| 隐藏元素 | `-hide=<elements>` | `"hide": "<elements>"` | 隐藏指定UI元素 | `"control,scroll,theme"` |
-| 背景图片 | `-bg=<path>` | `"bg": "<path>"` | 设置登录界面背景图片 | `"C:/bg/image.jpg"` |
+无效的配置类型、枚举值和隐藏项会被忽略，并在主进程日志中说明原因。
 
-### 配置优先级
+### 可隐藏元素
 
-1. **配置文件** - 最高优先级
-2. **命令行参数** - 中等优先级  
-3. **默认值** - 最低优先级
+| 值 | 效果 |
+| --- | --- |
+| `control` | 隐藏整个悬浮控制面板 |
+| `theme` | 隐藏本地页面的主题按钮 |
+| `scroll` | 隐藏滚动条但保留滚动能力 |
+| `mouse` | 隐藏鼠标光标，输入区域仍显示文本光标 |
+| `home` | 隐藏主页按钮 |
+| `minimize` | 隐藏最小化按钮 |
+| `maximize` | 隐藏最大化按钮 |
+| `close` | 隐藏关闭按钮 |
+| `fullscreen` | 隐藏全屏按钮 |
 
-### 主题配置
-
-- `light`: 浅色主题（默认）
-- `dark`: 深色主题
-- 支持系统主题自动检测
-- 用户手动切换会保存到本地存储
-
-### 隐藏元素配置
-
-| 隐藏元素 | 说明 | 状态 |
-|----------|------|------|
-| `control` | 隐藏整个控制面板 | ✅ 已实现 |
-| `theme` | 隐藏主题切换按钮 | ✅ 已实现 |
-| `scroll` | 隐藏滚动条（保持滚动功能） | ✅ 已实现 |
-| `home` | 隐藏主页按钮 | ✅ 已实现 |
-| `minimize` | 隐藏最小化按钮 | ✅ 已实现 |
-| `maximize` | 隐藏最大化按钮 | ✅ 已实现 |
-| `close` | 隐藏关闭按钮 | ✅ 已实现 |
-| `fullscreen` | 隐藏全屏按钮 | ✅ 已实现 |
-
-### 命令行参数
-
-您可以在执行程序时附加以下参数来自定义启动行为：
-
-- `-link=<url>`: 指定启动时加载的URL。
-  - **示例:** `Box.exe -link=www.bing.com`
-
-- `-mode=fullscreen`: 以全屏模式启动。
-  - **示例:** `Box.exe -mode=fullscreen`
-
-- `-window=top`: 使窗口保持在最顶层。
-  - **示例:** `Box.exe -window=top`
-
-- `-page=single`: 启用单页模式。在此模式下，点击"主页"按钮将打开系统的用户主目录，而不是返回应用的登录页。
-  - **示例:** `Box.exe -page=single`
-
-- `-theme=<theme>`: 设置应用主题。支持 `light`（浅色）和 `dark`（深色）两种主题。
-  - **示例:** `Box.exe -theme=dark`
-  - **示例:** `Box.exe -theme=light`
-
-- `-hide=<elements>`: 隐藏UI元素。支持隐藏控制面板按钮、主题切换按钮、滚动条和鼠标光标。
-  - `control`: 隐藏整个控制面板
-  - `theme`: 隐藏主题切换按钮
-  - `scroll`: 隐藏滚动条（保持滚动功能）
-  - `mouse`: 隐藏鼠标光标（在输入框中仍显示文本光标）
-  - `home`, `minimize`, `maximize`, `close`, `fullscreen`: 隐藏对应的控制按钮
-  - **示例:** `Box.exe -hide=control,scroll`
-  - **示例:** `Box.exe -hide=theme,mouse`
-  - **示例:** `Box.exe -hide=home,close`
-
-- `-bg=<path>`: 设置登录界面的背景图片。
-  - **示例:** `Box.exe -bg=C:/backgrounds/image.jpg`
-
-### 常用组合示例
+开发模式下可直接传递参数：
 
 ```bash
-# 企业部署：深色主题 + 隐藏主题切换
- Box.exe -theme=dark -hide=theme
-
-# 极简模式：全屏 + 隐藏所有控制元素
-Box.exe -mode=fullscreen -hide=control,scroll
-
-# 演示模式：深色主题 + 隐藏滚动条
-Box.exe -theme=dark -hide=scroll
-
-# 沉浸模式：隐藏鼠标光标 + 控制面板
-Box.exe -hide=mouse,control
-
-# 自定义界面：指定网站 + 隐藏部分按钮
-Box.exe -link=https://example.com -hide=minimize,maximize
+pnpm start -link=https://example.com -theme=dark -hide=scroll
 ```
 
-### 开发环境使用
+## 操作
 
-在开发环境中通过 pnpm 脚本传递参数（pnpm 会将脚本名后的参数直接转发给脚本）：
+- 按下 `Ctrl + Shift + Alt` 切换悬浮控制面板。
+- 主窗口的系统关闭操作会最小化窗口；使用控制面板的关闭按钮退出。
+- F12、开发者工具快捷键、右键菜单和 Alt+F4 在应用窗口内被拦截。
 
-```bash
-pnpm run start -theme=dark
-pnpm run start -hide=control,scroll
-pnpm run start -theme=dark -hide=theme
+## 项目结构
+
+```text
+src/       Vue 本地登录页、错误页、路由和主题
+electron/  Electron 主进程、预加载、IPC、窗口和会话策略
+shared/    跨进程类型、URL 处理、注入脚本和样式
+assets/    应用图标和文档截图
 ```
 
-### 快捷键
+启动链路为 `electron/main.ts` → `electron/app-lifecycle.ts` → `electron/window-manager.ts`。需要特权能力时应保持以下边界：
 
-应用内置了以下快捷键以方便操作：
+```text
+Vue/注入控件 → preload 固定方法 → IPC handler → Electron 操作
+```
 
-- `Ctrl + Shift + Alt`: 切换应用内悬浮控制面板的显示与隐藏.
+## License
+
+[MIT](LICENSE)

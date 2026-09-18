@@ -5,22 +5,18 @@ import { useTheme } from './composables/useTheme';
 const { loadThemePreference } = useTheme();
 void loadThemePreference();
 
-// 阻止双击事件导致窗口最大化
 const handleDragRegionDoubleClick = (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
   return false;
 };
 
-// 确保拖动区域只处理拖动事件，其他事件透传
 const handleDragRegionMouseDown = (e: MouseEvent) => {
-  // 只有左键拖动才触发
   if (e.button !== 0) {
     e.stopPropagation();
     e.preventDefault();
   }
   
-  // 如果是双击，阻止事件
   if (e.detail === 2) {
     e.stopPropagation();
     e.preventDefault();
@@ -30,25 +26,21 @@ const handleDragRegionMouseDown = (e: MouseEvent) => {
 
 <template>
   <div class="window-frame">
-    <!-- 主题切换按钮组件 -->
     <ThemeToggle />
-    
-    <!-- 添加一个可拖动区域，但阻止双击最大化，并确保点击事件透传 -->
+
     <div 
       class="drag-region" 
       @dblclick="handleDragRegionDoubleClick"
       @mousedown="handleDragRegionMouseDown"
     ></div>
     
-    <div class="window-content scroll-container">
+    <div class="window-content">
       <router-view />
     </div>
   </div>
 </template>
 
 <style>
-/* 全局基础样式 */
-
 * {
   margin: 0;
   padding: 0;
@@ -64,16 +56,14 @@ body, html {
 }
 
 .window-content {
-  height: 100vh; /* 修改高度为全屏 */
+  height: 100vh;
   overflow: auto;
   background-color: var(--bg-secondary);
-  /* 添加scroll-container类 */
-  scrollbar-width: thin; /* Firefox */
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   transition: background-color 0.3s ease;
 }
 
-/* Webkit 滚动条样式 */
 .window-content::-webkit-scrollbar {
   width: 8px;
 }
@@ -90,19 +80,15 @@ body, html {
 .window-content::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
-
-
-
-/* 可拖动区域，但确保不会挡住内容点击 */
 .drag-region {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 5px; /* 减小高度，使其几乎不可见 */
-  -webkit-app-region: drag; /* 允许拖动 */
+  height: 5px;
+  -webkit-app-region: drag;
   z-index: 999;
-  opacity: 0; /* 完全透明 */
-  pointer-events: auto; /* 只捕获拖动事件，其他点击透传 */
+  opacity: 0;
+  pointer-events: auto;
 }
 </style>

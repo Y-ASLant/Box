@@ -1,4 +1,4 @@
-import { BrowserWindow, app, globalShortcut, Menu } from 'electron';
+import { BrowserWindow, app, Menu } from 'electron';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { injectBaseStyles, injectNewWindowStyles, injectNewWindowBehaviors } from './controls-injector';
@@ -7,7 +7,8 @@ import { normalizeHttpUrl } from '../shared/url';
 
 // 保持窗口对象的全局引用，避免JavaScript对象被垃圾回收时窗口关闭
 let mainWindow: BrowserWindow | null = null;
-
+const managedWindows = new Set<BrowserWindow>();
+const windowsAllowedToClose = new WeakSet<BrowserWindow>();
 
 // 获取主窗口
 export function getMainWindow(): BrowserWindow | null {
@@ -19,15 +20,26 @@ export function getMainWindow(): BrowserWindow | null {
  * 抽象重复的窗口事件处理逻辑
  */
 function setupCommonWindowEvents(window: BrowserWindow, isMainWindow = false, hiddenButtons: string[] = []) {
+  managedWindows.add(window);
+
   window.on('close', (event) => {
+    if (!isMainWindow || windowsAllowedToClose.has(window)) return;
     event.preventDefault();
-    if (isMainWindow) {
-      window.minimize();
+    window.minimize();
+  });
+
+  window.on('closed', () => {
+    managedWindows.delete(window);
+    if (mainWindow === window) {
+      mainWindow = null;
     }
   });
 
   window.webContents.on('before-input-event', (event, input) => {
-    if (input.alt && input.key === 'F4') {
+    const key = input.key.toLowerCase();
+    const isDevToolsShortcut = key === 'f12'
+      || ((input.control || input.meta) && input.shift && (key === 'i' || key === 'j'));
+    if ((input.alt && key === 'f4') || isDevToolsShortcut) {
       event.preventDefault();
     }
   });
@@ -41,8 +53,14 @@ function setupCommonWindowEvents(window: BrowserWindow, isMainWindow = false, hi
     }
   });
 
-  window.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
-    if (errorCode === -3) return;
+  window.webContents.on('did-fail-load', (
+    _event,
+    errorCode,
+    errorDescription,
+    validatedURL,
+    isMainFrame
+  ) => {
+    if (errorCode === -3 || !isMainFrame || validatedURL.startsWith(getRendererUrl())) return;
 
     console.error(`加载URL失败: ${validatedURL}, 错误: ${errorDescription} (${errorCode})`);
     const errorMessage = encodeURIComponent(`无法加载页面: ${errorDescription} (${errorCode})`);
@@ -104,7 +122,7 @@ function getCommonWindowConfig(isMainWindow: boolean = false) {
   }
 }
 
-function getRendererUrl(hash = ''): string {
+export function getRendererUrl(hash = ''): string {
   const baseUrl = process.env.NODE_ENV === 'development'
     ? 'http://localhost:5173/'
     : pathToFileURL(path.join(__dirname, '../dist/index.html')).toString();
@@ -130,26 +148,18 @@ export function createWindow(options: WindowOptions = {}, hiddenButtons: string[
 
   mainWindow = window;
   setupCommonWindowEvents(window, true, hiddenButtons);
-  setupNewWindowHandler(hiddenButtons);
-
-  window.on('closed', () => {
-    if (mainWindow === window) {
-      mainWindow = null;
-    }
-  });
+  setupNewWindowHandler(window, hiddenButtons);
 
   loadMainWindowContent(startUrl);
-  setupGlobalShortcuts();
   Menu.setApplicationMenu(null);
 }
 
 // 设置新窗口处理
-function setupNewWindowHandler(hiddenButtons: string[] = []) {
-  if (!mainWindow) return;
-
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+function setupNewWindowHandler(parentWindow: BrowserWindow, hiddenButtons: string[] = []) {
+  parentWindow.webContents.setWindowOpenHandler(({ url }) => {
     const newWindow = new BrowserWindow(getCommonWindowConfig(false));
     setupCommonWindowEvents(newWindow, false, hiddenButtons);
+    setupNewWindowHandler(newWindow, hiddenButtons);
     newWindow.loadURL(url).catch(error => console.error('加载新窗口失败:', error));
     return { action: 'deny' };
   });
@@ -166,34 +176,20 @@ function loadMainWindowContent(startUrl?: string | null) {
   }
 }
 
-// 设置全局快捷键
-function setupGlobalShortcuts() {
-  // 禁用F12和其他开发者工具快捷键
-  globalShortcut.register('F12', () => {
-    return false;
-  });
-  globalShortcut.register('CommandOrControl+Shift+I', () => {
-    return false;
-  });
-  globalShortcut.register('CommandOrControl+Shift+J', () => {
-    return false;
-  });
-
-  // 禁用Alt+F4关闭窗口 - 跨平台处理
-  try {
-    globalShortcut.register('Alt+F4', () => {
-      console.log('Alt+F4 被拦截');
-      return false;
-    });
-  } catch (error) {
-    console.warn('无法注册Alt+F4全局快捷键:', error);
-  }
+export function closeManagedWindow(window: BrowserWindow): boolean {
+  if (window.isDestroyed()) return false;
+  windowsAllowedToClose.add(window);
+  window.close();
+  return true;
 }
 
 // 清理窗口资源
 export function cleanupWindows() {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.destroy();
+  for (const window of [...managedWindows]) {
+    if (!window.isDestroyed()) {
+      window.destroy();
+    }
   }
+  managedWindows.clear();
   mainWindow = null;
 }
