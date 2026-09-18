@@ -1,7 +1,12 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import process from 'node:process';
 
-const [, , tag, outputPath] = process.argv;
+const args = process.argv.slice(2);
+if (args[0] === '--') {
+  args.shift();
+}
+
+const [tag, outputPath] = args;
 
 if (!tag || !outputPath) {
   console.error('用法: node scripts/extract-release-notes.mjs <v版本号> <输出文件>');

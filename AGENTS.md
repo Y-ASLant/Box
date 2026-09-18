@@ -42,7 +42,7 @@ pnpm build:mac:x64     # checked macOS Intel package
 pnpm build:mac:arm64   # checked macOS Apple Silicon package
 pnpm build:linux:x64   # checked Linux x64 packages
 pnpm build:linux:arm64 # checked Linux arm64 packages
-pnpm release:notes -- v1.0.0 release-notes.md # validate/extract one changelog version
+pnpm release:notes v1.0.0 release-notes.md # validate/extract one changelog version
 make build             # checked package; keeps only release files under build/
 make clean             # deletes generated outputs, caches, logs, and temporary files
 make distclean         # make clean plus node_modules/ and repo-local .pnpm-store/
