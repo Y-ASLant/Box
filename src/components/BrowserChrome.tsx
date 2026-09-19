@@ -21,6 +21,7 @@ import {
   Moon,
   Plus,
   RotateCw,
+  Settings,
   Square,
   Sun,
   X
@@ -28,7 +29,7 @@ import {
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { FormEvent, MouseEvent, ReactNode } from 'react';
 import type { BrowserState } from '../../shared/types.mts';
-import { useAppTheme } from '../hooks/use-app-theme';
+import { useAppSettings } from '../hooks/use-app-settings';
 
 export interface BrowserChromeHandle {
   focusAddress: () => void;
@@ -44,6 +45,8 @@ interface BrowserChromeProps {
   onGoForward: () => void;
   onReload: () => void;
   onHome: () => void;
+  isSettingsOpen: boolean;
+  onOpenSettings: () => void;
 }
 
 export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>(function BrowserChrome({
@@ -55,14 +58,16 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
   onGoBack,
   onGoForward,
   onReload,
-  onHome
+  onHome,
+  isSettingsOpen,
+  onOpenSettings
 }, ref) {
   const addressInput = useRef<HTMLInputElement>(null);
   const [address, setAddress] = useState('');
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { isDarkMode, toggleTheme } = useAppTheme();
+  const { isDarkMode, toggleTheme } = useAppSettings();
   const activeTab = useMemo(
     () => state.tabs.find(tab => tab.id === state.activeTabId) ?? null,
     [state.activeTabId, state.tabs]
@@ -123,7 +128,7 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
       as="header"
       position="relative"
       zIndex="docked"
-      height="28"
+      height="24"
       color="fg"
       bg="bg"
       borderBottomWidth="1px"
@@ -131,10 +136,10 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
     >
       <Flex
         className="window-drag-region"
-        align="end"
+        align="center"
         gap="1"
         height="11"
-        px="2"
+        p="1"
         bg="bg.muted"
       >
         <Tabs.Root
@@ -192,7 +197,6 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
           size="sm"
           variant="ghost"
           colorPalette="blue"
-          mb="1"
           onClick={() => void onCreateTab()}
         >
           <Plus aria-hidden />
@@ -235,7 +239,7 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
         </ButtonGroup>
       </Flex>
 
-      <Flex align="center" height="17" gap="3" px="4" bg="bg">
+      <Flex align="center" height="13" gap="2" px="1.5" bg="bg">
         <ButtonGroup as="nav" aria-label="网页导航" variant="ghost" size="sm">
           <NavigationButton label="后退" disabled={!activeTab?.canGoBack} onClick={onGoBack}>
             <ArrowLeft aria-hidden />
@@ -284,6 +288,16 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
         >
           {isDarkMode ? <Sun aria-hidden /> : <Moon aria-hidden />}
         </NavigationButton>
+        <IconButton
+          aria-label="打开设置"
+          title="设置"
+          size="sm"
+          variant={isSettingsOpen ? 'subtle' : 'ghost'}
+          colorPalette={isSettingsOpen ? 'blue' : 'gray'}
+          onClick={onOpenSettings}
+        >
+          <Settings aria-hidden />
+        </IconButton>
       </Flex>
     </Box>
   );

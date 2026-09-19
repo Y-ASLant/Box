@@ -9,13 +9,15 @@ import {
   getMainWindow,
   getRendererUrl,
   getWindowState,
+  applyRuntimeSettings,
   navigateBrowserTab,
   navigateHistory,
   openNewTabPage,
   reloadBrowserTab,
+  setLocalPageVisible,
   toggleWindowFullscreen
 } from './window-manager';
-import type { ResolvedConfig } from '../shared/types.mts';
+import type { ResolvedConfig, RuntimeSettings } from '../shared/types.mts';
 
 const HANDLER_CHANNELS = [
   'browser:get-state',
@@ -27,12 +29,14 @@ const HANDLER_CHANNELS = [
   'browser:go-forward',
   'browser:reload',
   'browser:new-tab-page',
+  'browser:set-local-page-visible',
   'window:minimize',
   'window:toggle-maximize',
   'window:toggle-fullscreen',
   'window:close',
   'window:get-state',
   'get-app-config',
+  'settings:apply-runtime',
   'get-background-path',
   'clear-history-cache'
 ] as const;
@@ -83,6 +87,9 @@ export function registerIPCHandlers(config: ResolvedConfig) {
   ipcMain.handle('browser:new-tab-page', (event, tabId: unknown) => withLocalSender(event, () => (
     typeof tabId === 'string' && openNewTabPage(tabId)
   )));
+  ipcMain.handle('browser:set-local-page-visible', (event, visible: unknown) => withLocalSender(event, () => (
+    typeof visible === 'boolean' && setLocalPageVisible(visible)
+  )));
 
   ipcMain.handle('window:minimize', event => withLocalSender(event, () => {
     getMainWindow()?.minimize();
@@ -104,7 +111,15 @@ export function registerIPCHandlers(config: ResolvedConfig) {
 
   ipcMain.handle('get-app-config', event => {
     if (!isLocalRendererSender(event)) return {};
-    return { theme: config.theme };
+    return {
+      theme: config.theme,
+      alwaysOnTop: config.alwaysOnTop,
+      singlePage: config.singlePage
+    };
+  });
+  ipcMain.handle('settings:apply-runtime', (event, settings: unknown) => {
+    if (!isLocalRendererSender(event) || !isRuntimeSettings(settings)) return false;
+    return applyRuntimeSettings(settings.alwaysOnTop, settings.singlePage);
   });
   ipcMain.handle('get-background-path', event => (
     isLocalRendererSender(event) ? getBackgroundUrl(config.backgroundPath) : null
@@ -115,8 +130,14 @@ export function registerIPCHandlers(config: ResolvedConfig) {
     if (!mainWindow || mainWindow.isDestroyed()) return false;
     await mainWindow.webContents.session.clearCache();
     await mainWindow.webContents.session.clearStorageData({
-      storages: ['cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'serviceworkers', 'cachestorage']
+      storages: ['cookies', 'filesystem', 'indexdb', 'shadercache', 'serviceworkers', 'cachestorage']
     });
     return true;
   });
+}
+
+function isRuntimeSettings(value: unknown): value is RuntimeSettings {
+  if (!value || typeof value !== 'object') return false;
+  const settings = value as Record<string, unknown>;
+  return typeof settings.alwaysOnTop === 'boolean' && typeof settings.singlePage === 'boolean';
 }

@@ -14,7 +14,7 @@ Treat Electron security behavior as load-bearing. The default `permissive` compa
 - The React renderer starts at `src/main.tsx`. `src/App.tsx` keeps the browser shell mounted; `src/views/NewTabPage.tsx` is the local new-tab page. Browser commands flow through the typed preload bridge to the main-process tab manager.
 - Privileged flow must remain: React component/hook → typed `window.electronAPI` in `src/vite-env.d.ts` → fixed bridge method/channel in `electron/preload.ts` → handler in `electron/ipc-handlers.ts` → Electron operation.
 - HTTP(S) new-window requests become tabs, or reuse the current tab in `singlePage` mode; other protocols are denied.
-- Main-process state is module-scoped where ownership is singular (the main window, tab map, and active tab). Renderer state uses React state, effects, refs, callbacks, and a focused theme context in `use-app-theme.ts`; persisted keys are `theme` and `recentUrls`. Clearing history/cache clears session cookies and site storage as well as both local keys.
+- Main-process state is module-scoped where ownership is singular (the main window, tab map, active tab, and local-page visibility). Renderer state uses React state, effects, refs, callbacks, and the focused settings context in `use-app-settings.tsx`; persisted keys are `appSettings` and `recentUrls`. Clearing browsing data preserves application settings.
 - The home action resets the current tab to the local new-tab page.
 
 ## Key Directories
@@ -60,7 +60,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - Use `lucide-react` for interface icons. Import individual icon components for tree-shaking; do not substitute Unicode symbols, emoji, handwritten SVG, or a dynamic all-icons registry.
 - Use two-space indentation. Existing TypeScript generally uses single quotes and semicolons, though formatting is not fully uniform and no formatter enforces it.
 - Use camelCase for functions/variables, `handle…` for handlers, `use…` for composables, PascalCase for types/components, and `SCREAMING_SNAKE_CASE` for generator constants.
-- TypeScript implementation and hook files use kebab-case (`window-manager.ts`, `use-app-theme.ts`); React components and views use PascalCase (`BrowserChrome.tsx`, `NewTabPage.tsx`).
+- TypeScript implementation and hook files use kebab-case (`window-manager.ts`, `use-app-settings.tsx`); React components and views use PascalCase (`BrowserChrome.tsx`, `NewTabPage.tsx`, `SettingsPage.tsx`).
 - Put reusable cross-process contracts in `shared/types.mts`. Keep filesystem, session, protocol, and `BrowserWindow` access in `electron/`; keep UI and renderer state in `src/`.
 - Reuse functional seams: explicit parameters such as `BrowserWindow`, pure config parsing, module getters, React hooks, and guard clauses. There is no DI container, class service layer, global client store, or second state system.
 - Before window operations, check null/destroyed state. Use `async`/`await` with `try/catch` for user-visible operations; use Promise `.catch(...)` for fire-and-observe Electron calls. Log unexpected injection, configuration, and session failures; swallow only documented non-critical failures.

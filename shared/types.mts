@@ -2,7 +2,22 @@
 // 统一管理项目中使用的所有 TypeScript 接口和类型
 
 export type ThemeName = 'light' | 'dark';
+export type ThemePreference = ThemeName | 'system';
 export type CompatibilityMode = 'standard' | 'permissive';
+
+/** 本地设置页持久化的用户偏好 */
+export interface AppSettings {
+  theme: ThemePreference;
+  alwaysOnTop: boolean;
+  singlePage: boolean;
+  rememberRecentUrls: boolean;
+}
+
+/** 可由本地 renderer 在运行时安全应用的窗口行为 */
+export interface RuntimeSettings {
+  alwaysOnTop: boolean;
+  singlePage: boolean;
+}
 
 /** 窗口创建参数 */
 export interface WindowOptions {
@@ -28,6 +43,8 @@ export interface ResolvedConfig {
 /** 允许暴露给本地 React 页面的最小配置 */
 export interface RendererConfig {
   theme: ThemeName | null;
+  alwaysOnTop: boolean;
+  singlePage: boolean;
 }
 
 /** 顶部浏览器外壳展示的标签页状态 */

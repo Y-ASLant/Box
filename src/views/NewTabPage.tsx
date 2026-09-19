@@ -17,6 +17,7 @@ import { Search, Trash } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { normalizeHttpUrl } from '../../shared/url.mts';
+import { useAppSettings } from '../hooks/use-app-settings';
 
 interface NewTabPageProps {
   onNavigate: (url: string) => void | Promise<void>;
@@ -48,6 +49,7 @@ function displayHost(url: string): string {
 }
 
 export function NewTabPage({ onNavigate }: NewTabPageProps) {
+  const { settings } = useAppSettings();
   const [remoteUrl, setRemoteUrl] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [recentUrls, setRecentUrls] = useState(loadRecentUrls);
@@ -68,7 +70,14 @@ export function NewTabPage({ onNavigate }: NewTabPageProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (settings.rememberRecentUrls) return;
+    setRecentUrls([]);
+    localStorage.removeItem('recentUrls');
+  }, [settings.rememberRecentUrls]);
+
   const saveUrl = (url: string) => {
+    if (!settings.rememberRecentUrls) return;
     setRecentUrls(currentUrls => {
       const nextUrls = [url, ...currentUrls.filter(item => item !== url)].slice(0, 6);
       localStorage.setItem('recentUrls', JSON.stringify(nextUrls));

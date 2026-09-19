@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { BrowserState, WindowState } from '../shared/types.mts';
+import type { BrowserState, RuntimeSettings, WindowState } from '../shared/types.mts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getBrowserState: () => ipcRenderer.invoke('browser:get-state'),
@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   goForward: (tabId: string) => ipcRenderer.invoke('browser:go-forward', tabId),
   reload: (tabId: string) => ipcRenderer.invoke('browser:reload', tabId),
   openNewTabPage: (tabId: string) => ipcRenderer.invoke('browser:new-tab-page', tabId),
+  setLocalPageVisible: (visible: boolean) => ipcRenderer.invoke('browser:set-local-page-visible', visible),
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
   toggleMaximizeWindow: () => ipcRenderer.invoke('window:toggle-maximize'),
   toggleFullscreenWindow: () => ipcRenderer.invoke('window:toggle-fullscreen'),
@@ -32,6 +33,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('focus-address', handler);
   },
   getAppConfig: () => ipcRenderer.invoke('get-app-config'),
+  applyRuntimeSettings: (settings: RuntimeSettings) => ipcRenderer.invoke('settings:apply-runtime', settings),
   getBackgroundPath: () => ipcRenderer.invoke('get-background-path'),
   clearHistoryAndCache: () => ipcRenderer.invoke('clear-history-cache')
 });

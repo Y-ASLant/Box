@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import type { BrowserState, BrowserTabState, WindowOptions, WindowState } from '../shared/types.mts';
 import { isHttpUrl, normalizeHttpUrl } from '../shared/url.mts';
 
-const BROWSER_CHROME_HEIGHT = 113;
+const BROWSER_CHROME_HEIGHT = 97;
 const CUSTOM_FRAME_BORDER = 1;
 const NEW_TAB_TITLE = '新标签页';
 
@@ -20,6 +20,7 @@ let activeTabId: string | null = null;
 let nextTabId = 1;
 let tabWebSecurity = true;
 let singlePageMode = false;
+let localPageVisible = false;
 const tabs = new Map<string, ManagedTab>();
 
 export function getMainWindow(): BrowserWindow | null {
@@ -95,11 +96,24 @@ function showActiveView() {
   }
 
   const activeTab = activeTabId ? tabs.get(activeTabId) : null;
-  if (activeTab?.view) {
+  if (!localPageVisible && activeTab?.view) {
     mainWindow.contentView.addChildView(activeTab.view);
     layoutActiveView();
   }
   publishBrowserState();
+}
+
+export function setLocalPageVisible(visible: boolean): boolean {
+  localPageVisible = visible;
+  showActiveView();
+  return true;
+}
+
+export function applyRuntimeSettings(alwaysOnTop: boolean, singlePage: boolean): boolean {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  mainWindow.setAlwaysOnTop(alwaysOnTop);
+  singlePageMode = singlePage;
+  return true;
 }
 
 function updateTabFromWebContents(tab: ManagedTab) {
@@ -153,6 +167,7 @@ function createTabView(tab: ManagedTab): WebContentsView {
     } else if (key === 't') {
       event.preventDefault();
       createBrowserTab(null, true);
+      mainWindow?.webContents.send('focus-address');
     } else if (key === 'w') {
       event.preventDefault();
       closeBrowserTab(tab.id);
@@ -286,6 +301,7 @@ export function createWindow(options: WindowOptions = {}) {
   const { startUrl, fullscreen, alwaysOnTop, webSecurity = true, singlePage = false } = options;
   tabWebSecurity = webSecurity;
   singlePageMode = singlePage;
+  localPageVisible = false;
 
   const iconPath = path.join(
     process.env.NODE_ENV === 'development' ? __dirname : app.getAppPath(),
@@ -344,6 +360,7 @@ export function createWindow(options: WindowOptions = {}) {
     } else if (key === 't') {
       event.preventDefault();
       createBrowserTab(null, true);
+      window.webContents.send('focus-address');
     } else if (key === 'w' && activeTabId) {
       event.preventDefault();
       closeBrowserTab(activeTabId);

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { BrowserState, RendererConfig, WindowState } from '../shared/types.mts';
+import type { BrowserState, RendererConfig, RuntimeSettings, WindowState } from '../shared/types.mts';
 
 declare global {
   interface ElectronAPI {
@@ -13,6 +13,7 @@ declare global {
     goForward: (tabId: string) => Promise<boolean>;
     reload: (tabId: string) => Promise<boolean>;
     openNewTabPage: (tabId: string) => Promise<boolean>;
+    setLocalPageVisible: (visible: boolean) => Promise<boolean>;
     minimizeWindow: () => Promise<boolean>;
     toggleMaximizeWindow: () => Promise<boolean>;
     toggleFullscreenWindow: () => Promise<boolean>;
@@ -22,6 +23,7 @@ declare global {
     onBrowserStateChanged: (listener: (state: BrowserState) => void) => () => void;
     onFocusAddress: (listener: () => void) => () => void;
     getAppConfig: () => Promise<RendererConfig>;
+    applyRuntimeSettings: (settings: RuntimeSettings) => Promise<boolean>;
     getBackgroundPath: () => Promise<string | null>;
     clearHistoryAndCache: () => Promise<boolean>;
   }
