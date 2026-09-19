@@ -4,6 +4,15 @@
 
 ## [未发布]
 
+### 变更
+
+- 将 renderer 从 Vue 3 全面迁移到 React 19 与 Chakra UI 3，浏览器外壳、新标签页、表单、按钮、主题和明暗模式均使用 Chakra 默认系统、语义 Token、组件 recipe 与原生动效实现。
+- 更新 Vite、TypeScript、Lucide 与文档中的 renderer 架构说明，保持既有 Electron IPC 边界、浏览器行为和持久化键不变。
+
+### 移除
+
+- 移除 Vue、Vue TypeScript 检查器、Vue Vite 插件、旧 Vue 单文件组件、Vue composable 以及旧版手写 UI Token 和组件样式。
+
 ## [1.1.0] - 2026-09-19
 
 ### 新增
@@ -62,6 +71,15 @@
 This file records changes to Box (Browser Plus). Its format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and version numbers follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+### Changed
+
+- Migrated the renderer completely from Vue 3 to React 19 and Chakra UI 3; Chakra's default system, semantic tokens, component recipes, and native motion now own the browser shell, new-tab page, forms, buttons, themes, and color modes.
+- Updated the Vite, TypeScript, Lucide, and documentation renderer architecture while preserving the existing Electron IPC boundary, browser behavior, and persistence keys.
+
+### Removed
+
+- Removed Vue, the Vue TypeScript checker, the Vue Vite plugin, legacy Vue single-file components and composable, and the old handwritten UI tokens and component styles.
 
 ## [1.1.0] - 2026-09-19
 

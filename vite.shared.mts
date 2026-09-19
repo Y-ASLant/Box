@@ -19,8 +19,11 @@ export const commonBuildConfig = {
   rollupOptions: {
     output: {
       manualChunks(id: string) {
-        if (/node_modules[\\/](?:vue|@vue)[\\/]/.test(id)) {
-          return 'vue';
+        if (/node_modules[\\/](?:react|react-dom|scheduler)[\\/]/.test(id)) {
+          return 'react';
+        }
+        if (/node_modules[\\/](?:@chakra-ui|@ark-ui|@emotion|@zag-js)[\\/]/.test(id)) {
+          return 'chakra';
         }
       },
       chunkFileNames: 'assets/js/[name]-[hash].js',

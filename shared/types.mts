@@ -25,7 +25,7 @@ export interface ResolvedConfig {
   configPath: string;
 }
 
-/** 允许暴露给本地 Vue 页面的最小配置 */
+/** 允许暴露给本地 React 页面的最小配置 */
 export interface RendererConfig {
   theme: ThemeName | null;
 }

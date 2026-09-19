@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
+import react from '@vitejs/plugin-react';
 import electron from 'vite-plugin-electron';
 import { rmSync } from 'node:fs';
 import {
@@ -17,7 +17,7 @@ const isProd = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
   plugins: [
-    vue(),
+    react(),
     electron([
       {
         // 主进程配置

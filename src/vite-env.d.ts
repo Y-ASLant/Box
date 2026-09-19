@@ -1,12 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { DefineComponent } from 'vue';
 import type { BrowserState, RendererConfig, WindowState } from '../shared/types.mts';
-
-declare module '*.vue' {
-  const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>;
-  export default component;
-}
 
 declare global {
   interface ElectronAPI {

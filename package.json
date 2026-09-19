@@ -18,7 +18,7 @@
     "start": "pnpm run electron:dev",
     "electron:dev": "vite --config electron.vite.config.mjs",
     "preview": "vite preview",
-    "check": "vue-tsc && pnpm run check:node",
+    "check": "tsc -p tsconfig.json && pnpm run check:node",
     "check:node": "tsc -p tsconfig.node.json",
     "test": "node --test electron/app-config.test.mts shared/url.test.mts",
     "build": "pnpm run test && pnpm run check && vite build",
@@ -35,17 +35,21 @@
     "release:notes": "node scripts/extract-release-notes.mjs"
   },
   "devDependencies": {
-    "@lucide/vue": "^1.47.0",
+    "@chakra-ui/react": "^3.37.0",
+    "@emotion/react": "^11.14.0",
     "@types/node": "^22.20.3",
-    "@vitejs/plugin-vue": "^6.0.9",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "electron": "^44.4.1",
     "electron-builder": "^26.15.3",
+    "lucide-react": "^1.47.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "terser": "^5.51.2",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
-    "vite-plugin-electron": "^1.1.2",
-    "vue": "^3.5.43",
-    "vue-tsc": "^3.3.11"
+    "vite-plugin-electron": "^1.1.2"
   },
   "build": {
     "appId": "top.aslant.box",

@@ -23,6 +23,7 @@ Box 不是面向公共互联网的通用浏览器，也不是安全隔离容器�
 - 自签名或异常证书页面兼容
 - 宽松同源与 CSP 策略，适配受信任 Web 程序
 - 浏览器式顶部标签栏、地址栏和前进/后退/刷新导航
+- 浏览器外壳和新标签页统一使用 React 19 与 Chakra UI 3 组件和主题系统
 - 全局使用 Lucide 图标组件，保持导航与窗口控件风格一致
 - 自定义窗口边框和标题栏控制，支持拖拽、缩放、全屏和置顶
 - 接管页面新窗口请求并在新标签页中打开
@@ -47,7 +48,7 @@ pnpm install
 
 ```bash
 pnpm start        # 启动 Electron 开发模式
-pnpm dev          # 仅启动 Vue/Vite renderer
+pnpm dev          # 仅启动 React/Vite renderer
 pnpm preview      # 预览已经生成的 renderer 生产构建
 pnpm test         # 运行配置与 URL 单元测试
 pnpm check        # 检查 renderer、Electron、shared 和构建配置
@@ -168,7 +169,7 @@ Box.exe --url=http://192.168.1.10 --fullscreen=true --always-on-top=true
 ## 项目结构
 
 ```text
-src/       Vue 浏览器外壳、新标签页、主题 Token 和最近地址
+src/       React/Chakra UI 浏览器外壳、新标签页、主题系统和最近地址
 electron/  Electron 主进程、标签页视图、预加载、IPC、配置和会话策略
 shared/    跨进程类型和 HTTP URL 规范化
 assets/    构建所需的应用图标
@@ -177,7 +178,7 @@ assets/    构建所需的应用图标
 启动链路为 `electron/main.ts` → `electron/app-lifecycle.ts` → `electron/window-manager.ts`。浏览器外壳保留在主窗口中，每个远程标签页运行在独立的 `WebContentsView` 中。两者都启用上下文隔离并关闭 Node 集成；远程标签页不加载预加载脚本。需要特权能力时保持以下固定边界：
 
 ```text
-Vue 浏览器外壳 → preload 固定方法 → IPC handler → Electron 标签页操作
+React 浏览器外壳 → preload 固定方法 → IPC handler → Electron 标签页操作
 ```
 
 预加载脚本不会暴露原始 `ipcRenderer`。标签页导航、配置读取和清理操作都会校验调用方，远程页面不能直接调用浏览器外壳的 IPC。由于默认的 `permissive` 模式会关闭 Web Security、忽略证书错误，这些边界不能把不受信任页面变成安全内容。需要浏览器默认安全策略时应使用 `standard` 模式。

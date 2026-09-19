@@ -1,0 +1,29 @@
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+  cursor: text;
+}
+
+.window-drag-region {
+  -webkit-app-region: drag;
+}
+
+.window-no-drag-region {
+  -webkit-app-region: no-drag;
+}
+
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none;
+}
