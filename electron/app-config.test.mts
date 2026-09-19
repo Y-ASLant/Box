@@ -32,7 +32,6 @@ test('解析新的强类型配置并以配置文件目录解析背景路径', t 
     alwaysOnTop: true,
     singlePage: true,
     theme: 'dark',
-    hiddenControls: ['home', 'close', 'home', 'unknown'],
     background: './assets/background.png',
     compatibilityMode: 'standard'
   }));
@@ -50,10 +49,9 @@ test('解析新的强类型配置并以配置文件目录解析背景路径', t 
   assert.equal(config.alwaysOnTop, true);
   assert.equal(config.singlePage, true);
   assert.equal(config.theme, 'dark');
-  assert.deepEqual(config.hiddenControls, ['home', 'close']);
   assert.equal(config.backgroundPath, backgroundPath);
   assert.equal(config.compatibilityMode, 'standard');
-  assert.ok(messages.warn.some(message => message.includes('unknown')));
+  assert.deepEqual(messages.warn, []);
 });
 
 test('命令行参数覆盖配置文件并支持双横线格式', t => {
@@ -61,8 +59,7 @@ test('命令行参数覆盖配置文件并支持双横线格式', t => {
   writeFileSync(join(directory, 'config.json'), JSON.stringify({
     url: 'http://file.example',
     fullscreen: false,
-    theme: 'light',
-    hiddenControls: ['home']
+    theme: 'light'
   }));
   const { logger } = createLogger();
 
@@ -72,8 +69,7 @@ test('命令行参数覆盖配置文件并支持双横线格式', t => {
       '.',
       '--url=https://cli.example/path',
       '--fullscreen=true',
-      '--theme=dark',
-      '--hidden-controls=close,scroll'
+      '--theme=dark'
     ],
     false,
     { cwd: directory, executablePath: join(directory, 'electron.exe') },
@@ -83,7 +79,6 @@ test('命令行参数覆盖配置文件并支持双横线格式', t => {
   assert.equal(config.url, 'https://cli.example/path');
   assert.equal(config.fullscreen, true);
   assert.equal(config.theme, 'dark');
-  assert.deepEqual(config.hiddenControls, ['close', 'scroll']);
 });
 
 test('兼容旧配置字段并输出迁移提示', t => {
@@ -93,7 +88,6 @@ test('兼容旧配置字段并输出迁移提示', t => {
     mode: 'fullscreen',
     window: 'top',
     page: 'single',
-    hide: 'theme,close',
     bg: ''
   }));
   const { logger, messages } = createLogger();
@@ -109,9 +103,8 @@ test('兼容旧配置字段并输出迁移提示', t => {
   assert.equal(config.fullscreen, true);
   assert.equal(config.alwaysOnTop, true);
   assert.equal(config.singlePage, true);
-  assert.deepEqual(config.hiddenControls, ['theme', 'close']);
   assert.equal(config.backgroundPath, null);
-  assert.ok(messages.warn.filter(message => message.includes('已弃用')).length >= 6);
+  assert.ok(messages.warn.filter(message => message.includes('已弃用')).length >= 5);
 });
 
 test('打包模式默认读取可执行文件旁的配置', t => {

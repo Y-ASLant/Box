@@ -1,7 +1,7 @@
 {
   "name": "box",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "面向 Web 应用、内网系统和展示终端的宽松 Electron 浏览器",
   "author": "ASlant <aslant2002@outlook.com>",
   "license": "MIT",
@@ -45,7 +45,6 @@
     "vite": "^8.3.0",
     "vite-plugin-electron": "^1.1.2",
     "vue": "^3.5.43",
-    "vue-router": "^5.3.1",
     "vue-tsc": "^3.3.11"
   },
   "build": {

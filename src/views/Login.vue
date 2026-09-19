@@ -79,7 +79,6 @@ const hostInitial = (url: string) => displayHost(url).charAt(0).toUpperCase() ||
   <section class="new-tab-page" :class="{ 'has-background': backgroundImage }" :style="backgroundStyle">
     <div class="new-tab-backdrop"></div>
     <div class="new-tab-content">
-      <div class="hero-mark">B</div>
       <h1>从这里开始</h1>
       <p class="hero-copy">打开 Web 应用、内网地址或设备管理页面</p>
 
@@ -125,125 +124,128 @@ const hostInitial = (url: string) => displayHost(url).charAt(0).toUpperCase() ||
   --new-tab-image: none;
   position: relative;
   min-height: 100%;
-  padding: clamp(56px, 10vh, 110px) 28px 72px;
+  padding: clamp(9rem, 21vh, 12rem) var(--space-8) var(--space-16);
   overflow: hidden;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
   background:
-    radial-gradient(circle at 20% 0%, rgba(99, 118, 241, 0.12), transparent 34%),
-    radial-gradient(circle at 80% 20%, rgba(53, 174, 210, 0.10), transparent 30%),
-    var(--bg-secondary);
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 34%),
+    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--color-success) 10%, transparent), transparent 30%),
+    var(--color-canvas);
 }
 .new-tab-page.has-background { background-image: var(--new-tab-image); background-size: cover; background-position: center; }
 .new-tab-backdrop {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
+  background: var(--color-backdrop);
   backdrop-filter: blur(14px) saturate(110%);
 }
 .new-tab-content { position: relative; width: min(760px, 100%); margin: 0 auto; text-align: center; }
-.hero-mark {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 24px;
-  place-items: center;
-  border-radius: 20px;
-  color: #fff;
-  background: linear-gradient(145deg, #3478f6, #6558ef);
-  box-shadow: 0 18px 42px rgba(69, 91, 220, 0.28);
-  font-size: 28px;
-  font-weight: 780;
+h1 {
+  margin: 0;
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.045em;
 }
-h1 { margin: 0; font-size: clamp(30px, 4vw, 42px); letter-spacing: -0.045em; }
-.hero-copy { margin: 12px 0 30px; color: var(--text-secondary); font-size: 15px; }
+.hero-copy {
+  margin: var(--space-3) 0 var(--space-8);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+}
 .launch-form {
   display: flex;
   align-items: center;
   height: 58px;
-  gap: 12px;
-  padding: 7px 8px 7px 20px;
-  border: 1px solid var(--chrome-border);
-  border-radius: 18px;
-  background: var(--bg-primary);
-  box-shadow: 0 14px 40px var(--shadow-light);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  gap: var(--space-3);
+  padding: 0.4375rem var(--space-2) 0.4375rem var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  transition:
+    border-color var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard);
 }
-.launch-form:focus-within { border-color: #7482ee; box-shadow: 0 16px 44px var(--shadow-light), 0 0 0 4px rgba(99, 115, 230, 0.12); }
-.search-mark { flex: 0 0 18px; color: var(--text-tertiary); }
+.launch-form:focus-within { border-color: var(--color-accent); box-shadow: var(--shadow-md), var(--shadow-focus); }
+.search-mark { flex: 0 0 18px; color: var(--color-text-muted); }
 .launch-form input {
   min-width: 0;
   flex: 1;
   border: 0;
   outline: 0;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
   background: transparent;
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
-.launch-form input::placeholder { color: var(--chrome-placeholder); }
+.launch-form input::placeholder { color: var(--color-text-placeholder); }
 .launch-form button {
   height: 42px;
-  padding: 0 22px;
+  padding: 0 var(--space-6);
   border: 0;
-  border-radius: 12px;
-  color: #fff;
-  background: #596bdc;
-  font-size: 14px;
-  font-weight: 650;
+  border-radius: var(--radius-lg);
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: background 140ms ease, transform 100ms ease;
+  transition:
+    background var(--duration-normal) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 }
-.launch-form button:hover:not(:disabled) { background: #4659cd; }
+.launch-form button:hover:not(:disabled) { background: var(--color-accent-hover); }
 .launch-form button:active:not(:disabled) { transform: scale(0.97); }
 .launch-form button:disabled { opacity: 0.4; cursor: default; }
-.error-message { margin: 14px 0 0; color: var(--error-color); font-size: 13px; }
-.recent-section { margin-top: 64px; text-align: left; }
-.section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.section-heading h2 { margin: 0; font-size: 14px; font-weight: 680; letter-spacing: 0.01em; }
+.error-message { margin: var(--space-4) 0 0; color: var(--color-danger); font-size: var(--font-size-sm); }
+.recent-section { margin-top: var(--space-16); text-align: left; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+.section-heading h2 { margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-bold); letter-spacing: 0.01em; }
 .clear-button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   border: 0;
-  color: var(--text-tertiary);
+  color: var(--color-text-muted);
   background: transparent;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   cursor: pointer;
 }
-.clear-button:hover { color: var(--error-color); }
-.recent-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.clear-button:hover { color: var(--color-danger); }
+.recent-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 .recent-item {
   display: flex;
   align-items: center;
   min-width: 0;
-  gap: 13px;
-  padding: 14px;
+  gap: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid transparent;
-  border-radius: 14px;
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
   text-align: left;
   cursor: pointer;
-  transition: border-color 140ms ease, background 140ms ease, transform 100ms ease;
+  transition:
+    border-color var(--duration-normal) var(--ease-standard),
+    background var(--duration-normal) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 }
-.recent-item:hover { border-color: var(--chrome-border); background: var(--bg-primary); transform: translateY(-1px); }
+.recent-item:hover { border-color: var(--color-border); background: var(--color-surface); transform: translateY(-1px); }
 .recent-icon {
   display: grid;
   flex: 0 0 38px;
   width: 38px;
   height: 38px;
   place-items: center;
-  border-radius: 11px;
-  color: #5264d2;
-  background: rgba(89, 107, 220, 0.12);
-  font-weight: 750;
+  border-radius: var(--radius-md);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  font-weight: var(--font-weight-bold);
 }
-.recent-text { min-width: 0; display: grid; gap: 4px; }
+.recent-text { min-width: 0; display: grid; gap: var(--space-1); }
 .recent-text strong,
 .recent-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recent-text strong { font-size: 13px; font-weight: 650; }
-.recent-text small { color: var(--text-tertiary); font-size: 11px; }
+.recent-text strong { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.recent-text small { color: var(--color-text-muted); font-size: var(--font-size-2xs); }
 @media (max-width: 700px) {
-  .new-tab-page { padding-inline: 18px; }
+  .new-tab-page { padding-inline: var(--space-5); }
   .recent-grid { grid-template-columns: 1fr; }
 }
 </style>

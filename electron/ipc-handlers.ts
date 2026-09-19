@@ -8,10 +8,12 @@ import {
   getBrowserState,
   getMainWindow,
   getRendererUrl,
+  getWindowState,
   navigateBrowserTab,
   navigateHistory,
   openNewTabPage,
-  reloadBrowserTab
+  reloadBrowserTab,
+  toggleWindowFullscreen
 } from './window-manager';
 import type { ResolvedConfig } from '../shared/types.mts';
 
@@ -27,6 +29,7 @@ const HANDLER_CHANNELS = [
   'browser:new-tab-page',
   'window:minimize',
   'window:toggle-maximize',
+  'window:toggle-fullscreen',
   'window:close',
   'window:get-state',
   'get-app-config',
@@ -92,17 +95,16 @@ export function registerIPCHandlers(config: ResolvedConfig) {
     else window.maximize();
     return window.isMaximized();
   }));
+  ipcMain.handle('window:toggle-fullscreen', event => withLocalSender(event, toggleWindowFullscreen));
   ipcMain.handle('window:close', event => withLocalSender(event, () => {
     getMainWindow()?.close();
     return true;
   }));
-  ipcMain.handle('window:get-state', event => withLocalSender(event, () => ({
-    maximized: getMainWindow()?.isMaximized() ?? false
-  })));
+  ipcMain.handle('window:get-state', event => withLocalSender(event, getWindowState));
 
   ipcMain.handle('get-app-config', event => {
     if (!isLocalRendererSender(event)) return {};
-    return { theme: config.theme, hiddenControls: config.hiddenControls };
+    return { theme: config.theme };
   });
   ipcMain.handle('get-background-path', event => (
     isLocalRendererSender(event) ? getBackgroundUrl(config.backgroundPath) : null

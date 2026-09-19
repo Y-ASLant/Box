@@ -1,7 +1,7 @@
 import { BrowserWindow, Menu, WebContentsView, app } from 'electron';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { BrowserState, BrowserTabState, WindowOptions } from '../shared/types.mts';
+import type { BrowserState, BrowserTabState, WindowOptions, WindowState } from '../shared/types.mts';
 import { isHttpUrl, normalizeHttpUrl } from '../shared/url.mts';
 
 const BROWSER_CHROME_HEIGHT = 113;
@@ -26,11 +26,28 @@ export function getMainWindow(): BrowserWindow | null {
   return mainWindow;
 }
 
-export function getRendererUrl(hash = ''): string {
-  const baseUrl = process.env.NODE_ENV === 'development'
+export function getWindowState(): WindowState {
+  return {
+    maximized: mainWindow?.isMaximized() ?? false,
+    fullscreen: mainWindow?.isFullScreen() ?? false
+  };
+}
+
+function publishWindowState() {
+  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) return;
+  mainWindow.webContents.send('window:state-changed', getWindowState());
+}
+
+export function toggleWindowFullscreen(): boolean {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  mainWindow.setFullScreen(!mainWindow.isFullScreen());
+  return true;
+}
+
+export function getRendererUrl(): string {
+  return process.env.NODE_ENV === 'development'
     ? 'http://localhost:5173/'
     : pathToFileURL(path.join(__dirname, '../dist/index.html')).toString();
-  return `${baseUrl}${hash}`;
 }
 
 function getTabState(tab: ManagedTab): BrowserTabState {
@@ -120,6 +137,11 @@ function createTabView(tab: ManagedTab): WebContentsView {
   });
   view.webContents.on('before-input-event', (event, input) => {
     const key = input.key.toLowerCase();
+    if (key === 'f11') {
+      event.preventDefault();
+      toggleWindowFullscreen();
+      return;
+    }
     if (key === 'f12' || ((input.control || input.meta) && input.shift && (key === 'i' || key === 'j'))) {
       event.preventDefault();
       return;
@@ -296,14 +318,21 @@ export function createWindow(options: WindowOptions = {}) {
 
   mainWindow = window;
   window.on('resize', layoutActiveView);
-  window.on('maximize', () => window.webContents.send('window:maximized-changed', true));
-  window.on('unmaximize', () => window.webContents.send('window:maximized-changed', false));
+  window.on('maximize', publishWindowState);
+  window.on('unmaximize', publishWindowState);
+  window.on('enter-full-screen', publishWindowState);
+  window.on('leave-full-screen', publishWindowState);
   window.on('closed', () => {
     mainWindow = null;
     cleanupWindows();
   });
   window.webContents.on('before-input-event', (event, input) => {
     const key = input.key.toLowerCase();
+    if (key === 'f11') {
+      event.preventDefault();
+      toggleWindowFullscreen();
+      return;
+    }
     if (key === 'f12' || ((input.control || input.meta) && input.shift && (key === 'i' || key === 'j'))) {
       event.preventDefault();
       return;

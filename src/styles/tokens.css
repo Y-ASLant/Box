@@ -1,0 +1,108 @@
+:root {
+  color-scheme: light;
+
+  --font-family-sans: Inter, "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  --font-size-2xs: 0.6875rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-md: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.125rem;
+  --font-size-display: clamp(2rem, 4vw, 2.625rem);
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+  --radius-full: 999px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --control-height-sm: 2rem;
+  --control-height-md: 2.25rem;
+  --control-height-lg: 2.625rem;
+  --control-height-xl: 3.625rem;
+  --shell-chrome-height: 7rem;
+  --shell-titlebar-height: 2.75rem;
+  --shell-navigation-height: 4.25rem;
+  --shell-window-button-width: 2.875rem;
+  --duration-fast: 100ms;
+  --duration-normal: 150ms;
+  --duration-spinner: 800ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --color-canvas: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f3f7;
+  --color-surface-raised: rgba(255, 255, 255, 0.9);
+  --color-titlebar: #e9ecf2;
+  --color-text-primary: #202431;
+  --color-text-secondary: #596174;
+  --color-text-muted: #8b94a5;
+  --color-text-placeholder: #98a1b2;
+  --color-border: #dfe3eb;
+  --color-border-strong: #cbd1dc;
+  --color-accent: #596bdc;
+  --color-accent-hover: #4659cd;
+  --color-accent-soft: #eef0ff;
+  --color-on-accent: #ffffff;
+  --color-danger: #d93f46;
+  --color-danger-hover: #c93239;
+  --color-success: #2f9565;
+  --color-control-hover: #eef1f6;
+  --color-tab-hover: rgba(255, 255, 255, 0.62);
+  --color-frame-border: #b9c1cf;
+  --color-scrollbar: #c1c7d1;
+  --color-backdrop: rgba(246, 247, 249, 0.84);
+  --shadow-sm: 0 4px 14px rgba(24, 31, 48, 0.08);
+  --shadow-md: 0 14px 40px rgba(24, 31, 48, 0.1);
+  --shadow-lg: 0 20px 56px rgba(24, 31, 48, 0.14);
+  --shadow-focus: 0 0 0 3px rgba(89, 107, 220, 0.16);
+  --shadow-divider: 0 1px 0 rgba(24, 31, 48, 0.05);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-canvas: #1d2028;
+  --color-surface: #242730;
+  --color-surface-muted: #191c23;
+  --color-surface-raised: rgba(36, 39, 48, 0.92);
+  --color-titlebar: #181b22;
+  --color-text-primary: #f2f4f8;
+  --color-text-secondary: #c2c8d3;
+  --color-text-muted: #8d95a5;
+  --color-text-placeholder: #7e8798;
+  --color-border: #353a46;
+  --color-border-strong: #4a5060;
+  --color-accent: #7a87ed;
+  --color-accent-hover: #8d98f5;
+  --color-accent-soft: #30364f;
+  --color-on-accent: #ffffff;
+  --color-danger: #ef5b62;
+  --color-danger-hover: #e54850;
+  --color-success: #55b987;
+  --color-control-hover: #343945;
+  --color-tab-hover: rgba(255, 255, 255, 0.06);
+  --color-frame-border: #4c5260;
+  --color-scrollbar: #555d6c;
+  --color-backdrop: rgba(29, 32, 40, 0.86);
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 14px 40px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 56px rgba(0, 0, 0, 0.38);
+  --shadow-focus: 0 0 0 3px rgba(122, 135, 237, 0.2);
+  --shadow-divider: 0 1px 0 rgba(0, 0, 0, 0.24);
+}

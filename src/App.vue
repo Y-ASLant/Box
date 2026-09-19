@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import BrowserChrome from './components/BrowserChrome.vue';
+import Login from './views/Login.vue';
 import type { BrowserState } from '../shared/types.mts';
 import { useTheme } from './composables/useTheme';
 
@@ -15,7 +16,20 @@ let removeFocusListener: (() => void) | undefined;
 const activeTabId = computed(() => browserState.value.activeTabId);
 
 onMounted(async () => {
-  if (!window.electronAPI) return;
+  if (!window.electronAPI) {
+    browserState.value = {
+      tabs: [{
+        id: 'preview-new-tab',
+        title: '新标签页',
+        url: null,
+        loading: false,
+        canGoBack: false,
+        canGoForward: false
+      }],
+      activeTabId: 'preview-new-tab'
+    };
+    return;
+  }
   removeStateListener = window.electronAPI.onBrowserStateChanged(state => {
     browserState.value = state;
   });
@@ -65,43 +79,7 @@ const navigate = async (url: string) => {
       @home="home"
     />
     <main class="browser-content">
-      <router-view v-slot="{ Component }">
-        <component :is="Component" @navigate="navigate" />
-      </router-view>
+      <Login @navigate="navigate" />
     </main>
   </div>
 </template>
-
-<style>
-* { box-sizing: border-box; }
-html,
-body,
-#app,
-.browser-shell {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-}
-body {
-  overflow: hidden;
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  font-family: Inter, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-}
-button,
-input { font: inherit; }
-button:focus-visible,
-input:focus-visible { outline: 2px solid #6d7df0; outline-offset: 2px; }
-.browser-shell {
-  display: grid;
-  grid-template-rows: 112px minmax(0, 1fr);
-  overflow: hidden;
-  border: 1px solid var(--chrome-border);
-  background: var(--chrome-bg);
-}
-.browser-content {
-  min-height: 0;
-  overflow: auto;
-  background: var(--bg-secondary);
-}
-</style>

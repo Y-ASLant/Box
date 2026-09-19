@@ -4,23 +4,31 @@
 
 ## [未发布]
 
+## [1.1.0] - 2026-09-19
+
 ### 新增
 
 - 新增 `standard` 与 `permissive` 浏览器兼容模式。
 - 新增基于 Node.js 内置测试运行器的配置和 URL 单元测试。
+- 新增持久化浏览器外壳、顶部标签页、地址栏、网页导航和弹窗转标签页能力。
+- 新增自定义全屏按钮和 `F11` 全屏快捷键，并与最小化、最大化和关闭控件统一管理窗口状态。
 
 ### 变更
 
 - 产品重新定位为面向受信任 Web 应用、内网系统和展示终端的宽松兼容浏览器，并统一相关界面与文档文案。
 - 配置重构为强类型布尔值、数组和单一解析结果，命令行参数现在优先于配置文件。
 - 打包应用默认从可执行文件目录读取配置，相对背景路径基于配置文件目录解析。
-- 单页模式现在复用当前窗口打开新链接，并让主页按钮返回配置首页。
+- 单页模式现在复用当前标签页打开新链接，主页按钮返回本地新标签页。
+- 窗口采用自定义边框和浏览器式顶部标签栏，移除界面中的品牌字母块。
+- 全局图标统一为 Lucide，颜色、字体、间距、圆角、阴影与动效统一由语义化 UI Token 管理。
 
 ### 修复
 
 - 修复宽松 CSP 可能与服务器原有 CSP 并存的问题，并阻止非 HTTP(S) 子窗口。
 
 ### 移除
+
+- 移除旧页面控件注入、隐藏控件配置、未使用的 Vue Router、本地错误页组件和过时界面截图。
 
 ## [1.0.0] - 2026-09-18
 
@@ -55,23 +63,31 @@ This file records changes to Box (Browser Plus). Its format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-19
+
 ### Added
 
 - Added `standard` and `permissive` browser compatibility modes.
 - Added configuration and URL unit tests using the built-in Node.js test runner.
+- Added a persistent browser shell with top tabs, an address bar, Web navigation, and popup-to-tab handling.
+- Added a custom fullscreen control and `F11` shortcut, with synchronized state for fullscreen, minimize, maximize, and close controls.
 
 ### Changed
 
 - Repositioned the product as a permissive compatibility browser for trusted Web applications, intranet systems, and display terminals, with matching UI and documentation copy.
 - Refactored configuration into typed booleans, arrays, and one resolved model, with command-line options taking precedence over the file.
 - Packaged builds now load configuration beside the executable, and relative backgrounds resolve from the configuration directory.
-- Single-page mode now reuses the current window for new links and returns the Home action to the configured start page.
+- Single-page mode now reuses the current tab for new links, and the Home action returns to the local new-tab page.
+- The window now uses a custom border and browser-style top tab strip, with letter-brand blocks removed from the interface.
+- All interface icons now use Lucide, while semantic UI tokens define colors, typography, spacing, radii, shadows, and motion globally.
 
 ### Fixed
 
 - Fixed relaxed CSP coexisting with an original server policy, and blocked non-HTTP(S) child windows.
 
 ### Removed
+
+- Removed legacy page-control injection, hidden-control configuration, unused Vue Router code, the local error-page component, and an outdated interface screenshot.
 
 ## [1.0.0] - 2026-09-18
 
@@ -98,6 +114,7 @@ This file records changes to Box (Browser Plus). Its format follows [Keep a Chan
 
 - Removed the legacy Inno Setup project, npm lockfile, duplicate injection templates, old installer script, and outdated screenshots.
 
-[未发布]: https://github.com/Y-ASLant/Box/compare/v1.0.0...HEAD
+[未发布]: https://github.com/Y-ASLant/Box/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Y-ASLant/Box/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Y-ASLant/Box/releases/tag/v1.0.0
-[Unreleased]: https://github.com/Y-ASLant/Box/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Y-ASLant/Box/compare/v1.1.0...HEAD

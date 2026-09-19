@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import type { DefineComponent } from 'vue';
-import type { BrowserState, RendererConfig } from '../shared/types.mts';
+import type { BrowserState, RendererConfig, WindowState } from '../shared/types.mts';
 
 declare module '*.vue' {
   const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>;
@@ -21,9 +21,10 @@ declare global {
     openNewTabPage: (tabId: string) => Promise<boolean>;
     minimizeWindow: () => Promise<boolean>;
     toggleMaximizeWindow: () => Promise<boolean>;
+    toggleFullscreenWindow: () => Promise<boolean>;
     closeWindow: () => Promise<boolean>;
-    getWindowState: () => Promise<{ maximized: boolean } | false>;
-    onWindowMaximizedChanged: (listener: (maximized: boolean) => void) => () => void;
+    getWindowState: () => Promise<WindowState | false>;
+    onWindowStateChanged: (listener: (state: WindowState) => void) => () => void;
     onBrowserStateChanged: (listener: (state: BrowserState) => void) => () => void;
     onFocusAddress: (listener: () => void) => () => void;
     getAppConfig: () => Promise<RendererConfig>;

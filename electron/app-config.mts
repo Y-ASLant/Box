@@ -1,13 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import {
-  HIDDEN_CONTROL_NAMES,
-  type CompatibilityMode,
-  type HiddenControl,
-  type ResolvedConfig,
-  type ThemeName
-} from '../shared/types.mts';
+import type { CompatibilityMode, ResolvedConfig, ThemeName } from '../shared/types.mts';
 import { normalizeHttpUrl } from '../shared/url.mts';
 
 const CONFIG_FILE_NAME = 'config.json';
@@ -19,17 +13,14 @@ const KNOWN_CONFIG_KEYS = new Set([
   'alwaysOnTop',
   'singlePage',
   'theme',
-  'hiddenControls',
   'background',
   'compatibilityMode',
   'link',
   'mode',
   'window',
   'page',
-  'hide',
   'bg'
 ]);
-const HIDDEN_CONTROL_SET = new Set<string>(HIDDEN_CONTROL_NAMES);
 
 interface ConfigLayer {
   url?: string | null;
@@ -37,7 +28,6 @@ interface ConfigLayer {
   alwaysOnTop?: boolean;
   singlePage?: boolean;
   theme?: ThemeName | null;
-  hiddenControls?: HiddenControl[];
   background?: string | null;
   compatibilityMode?: CompatibilityMode;
 }
@@ -59,7 +49,6 @@ const DEFAULT_CONFIG = {
   alwaysOnTop: false,
   singlePage: false,
   theme: null,
-  hiddenControls: [],
   background: null,
   compatibilityMode: 'permissive'
 } as const satisfies Required<ConfigLayer>;
@@ -122,30 +111,6 @@ function normalizeUrl(value: unknown, optionName: string, logger: ConfigLogger):
   }
 }
 
-function normalizeHiddenControls(
-  value: unknown,
-  optionName: string,
-  logger: ConfigLogger
-): HiddenControl[] | undefined {
-  const controls = Array.isArray(value)
-    ? value
-    : typeof value === 'string'
-      ? value.split(',').map(control => control.trim()).filter(Boolean)
-      : null;
-
-  if (!controls || !controls.every(control => typeof control === 'string')) {
-    logger.warn(`忽略无效配置项 ${optionName}：值必须是字符串数组`);
-    return undefined;
-  }
-
-  const invalidControls = controls.filter(control => !HIDDEN_CONTROL_SET.has(control));
-  if (invalidControls.length > 0) {
-    logger.warn(`忽略未知的隐藏元素: ${invalidControls.join(', ')}`);
-  }
-
-  return [...new Set(controls.filter((control): control is HiddenControl => HIDDEN_CONTROL_SET.has(control)))];
-}
-
 function warnLegacyConfig(key: string, replacement: string, logger: ConfigLogger) {
   logger.warn(`配置项 ${key} 已弃用，请改用 ${replacement}`);
 }
@@ -205,15 +170,6 @@ export function parseConfigObject(value: unknown, logger: ConfigLogger = console
     if (theme !== undefined) parsed.theme = theme;
   }
 
-  if ('hiddenControls' in config) {
-    const hiddenControls = normalizeHiddenControls(config.hiddenControls, 'hiddenControls', logger);
-    if (hiddenControls !== undefined) parsed.hiddenControls = hiddenControls;
-  } else if ('hide' in config) {
-    warnLegacyConfig('hide', 'hiddenControls', logger);
-    const hiddenControls = normalizeHiddenControls(config.hide, 'hide', logger);
-    if (hiddenControls !== undefined) parsed.hiddenControls = hiddenControls;
-  }
-
   if ('background' in config) {
     const background = normalizeOptionalString(config.background, 'background', logger);
     if (background !== undefined) parsed.background = background;
@@ -244,9 +200,6 @@ function parseCommandLine(args: string[], logger: ConfigLogger): ConfigLayer {
   const fullscreen = getArgument(args, 'fullscreen');
   const alwaysOnTop = getArgument(args, 'always-on-top');
   const singlePage = getArgument(args, 'single-page');
-  const canonicalHiddenControls = getArgument(args, 'hidden-controls');
-  const legacyHiddenControls = getArgument(args, 'hide');
-  const hiddenControls = canonicalHiddenControls ?? legacyHiddenControls;
   const canonicalBackground = getArgument(args, 'background');
   const legacyBackground = getArgument(args, 'bg');
   const background = canonicalBackground ?? legacyBackground;
@@ -254,9 +207,6 @@ function parseCommandLine(args: string[], logger: ConfigLogger): ConfigLayer {
   const theme = getArgument(args, 'theme');
 
   if (canonicalUrl === undefined && legacyUrl !== undefined) warnLegacyConfig('-link', '-url', logger);
-  if (canonicalHiddenControls === undefined && legacyHiddenControls !== undefined) {
-    warnLegacyConfig('-hide', '-hidden-controls', logger);
-  }
   if (canonicalBackground === undefined && legacyBackground !== undefined) {
     warnLegacyConfig('-bg', '-background', logger);
   }
@@ -301,10 +251,6 @@ function parseCommandLine(args: string[], logger: ConfigLogger): ConfigLayer {
   if (theme !== undefined) {
     const normalizedTheme = normalizeChoice(theme, THEMES, 'theme', logger);
     if (normalizedTheme !== undefined) parsed.theme = normalizedTheme;
-  }
-  if (hiddenControls !== undefined) {
-    const normalizedHiddenControls = normalizeHiddenControls(hiddenControls, 'hidden-controls', logger);
-    if (normalizedHiddenControls !== undefined) parsed.hiddenControls = normalizedHiddenControls;
   }
   if (background !== undefined) {
     const normalizedBackground = normalizeOptionalString(background, 'background', logger);
@@ -381,7 +327,6 @@ export function resolveAppConfig(
     alwaysOnTop: mergedConfig.alwaysOnTop,
     singlePage: mergedConfig.singlePage,
     theme: mergedConfig.theme,
-    hiddenControls: [...mergedConfig.hiddenControls],
     backgroundPath: resolveBackgroundPath(mergedConfig.background, backgroundBaseDirectory, logger),
     compatibilityMode: mergedConfig.compatibilityMode,
     configPath

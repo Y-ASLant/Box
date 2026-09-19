@@ -19,7 +19,7 @@ export const commonBuildConfig = {
   rollupOptions: {
     output: {
       manualChunks(id: string) {
-        if (/node_modules[\\/](?:vue-router|vue|@vue)[\\/]/.test(id)) {
+        if (/node_modules[\\/](?:vue|@vue)[\\/]/.test(id)) {
           return 'vue';
         }
       },

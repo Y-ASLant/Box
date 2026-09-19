@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { BrowserState } from '../shared/types.mts';
+import type { BrowserState, WindowState } from '../shared/types.mts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getBrowserState: () => ipcRenderer.invoke('browser:get-state'),
@@ -13,12 +13,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openNewTabPage: (tabId: string) => ipcRenderer.invoke('browser:new-tab-page', tabId),
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
   toggleMaximizeWindow: () => ipcRenderer.invoke('window:toggle-maximize'),
+  toggleFullscreenWindow: () => ipcRenderer.invoke('window:toggle-fullscreen'),
   closeWindow: () => ipcRenderer.invoke('window:close'),
   getWindowState: () => ipcRenderer.invoke('window:get-state'),
-  onWindowMaximizedChanged: (listener: (maximized: boolean) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, maximized: boolean) => listener(maximized);
-    ipcRenderer.on('window:maximized-changed', handler);
-    return () => ipcRenderer.removeListener('window:maximized-changed', handler);
+  onWindowStateChanged: (listener: (state: WindowState) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: WindowState) => listener(state);
+    ipcRenderer.on('window:state-changed', handler);
+    return () => ipcRenderer.removeListener('window:state-changed', handler);
   },
   onBrowserStateChanged: (listener: (state: BrowserState) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, state: BrowserState) => listener(state);

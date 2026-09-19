@@ -29,7 +29,6 @@ Box 不是面向公共互联网的通用浏览器，也不是安全隔离容器�
 - 浅色、深色主题；未指定时使用已保存偏好，首次使用按系统配色
 - 最多六条最近访问地址，以及会话缓存与站点数据清理
 - 可配置新标签页背景
-- URL 加载失败时显示本地错误页
 
 > [!IMPORTANT]
 > Box 面向受控环境，并在默认的 `permissive` 模式下信任加载的页面。请只加载可信的 Web 应用或内网服务，不要用宽松模式浏览未知网站，也不要把快捷键或开发者工具限制视为安全边界。
@@ -91,7 +90,7 @@ make distclean   # clean 后继续删除 node_modules 和仓库内 pnpm store
 
 ## 发布
 
-推送 `v1.0.0` 或 `V1.0.0` 这类 SemVer 标签会触发 [Release 工作流](.github/workflows/release.yml)。工作流会先确认标签版本与 `package.json` 一致，并检查 [CHANGELOG.md](CHANGELOG.md) 中存在相同版本的中英文条目；全部平台构建成功后，才会创建 GitHub Release。
+推送 `v1.1.0` 或 `V1.1.0` 这类 SemVer 标签会触发 [Release 工作流](.github/workflows/release.yml)。工作流会先确认标签版本与 `package.json` 一致，并检查 [CHANGELOG.md](CHANGELOG.md) 中存在相同版本的中英文条目；全部平台构建成功后，才会创建 GitHub Release。
 
 发布新版本时：
 
@@ -101,8 +100,8 @@ make distclean   # clean 后继续删除 node_modules 和仓库内 pnpm store
 
 ```bash
 pnpm build
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 正式版本会标记为 Latest Release，带预发布后缀的版本（例如 `v1.1.0-beta.1`）会标记为 Pre-release。Release 正文直接取自对应版本的 `CHANGELOG.md`，并附带以下构建产物：
@@ -143,7 +142,7 @@ git push origin v1.0.0
 
 `permissive` 会忽略证书错误、关闭 Web Security 并放宽 CSP；`standard` 保留 Chromium 默认的证书、同源和 CSP 行为。无效类型、枚举值和未知字段会被忽略并写入主进程日志；不存在的背景文件不会显示。
 
-旧字段 `link`、`mode`、`window`、`page`、`hide`、`bg` 以及对应旧命令行参数仍可被解析以兼容旧配置，但原悬浮控制面板和隐藏控件交互已经移除。
+旧字段 `link`、`mode`、`window`、`page`、`bg` 以及对应旧命令行参数仍可被解析以兼容旧配置。原悬浮控制面板、隐藏控件配置及其命令行参数已经移除。
 
 开发模式下可直接传递参数：
 
@@ -160,7 +159,7 @@ Box.exe --url=http://192.168.1.10 --fullscreen=true --always-on-top=true
 ## 操作与窗口行为
 
 - `Ctrl/Cmd + T` 新建标签页，`Ctrl/Cmd + W` 关闭当前标签页，`Ctrl/Cmd + L` 聚焦地址栏。
-- 标签栏右侧提供自定义最小化、最大化/还原和关闭按钮；Windows 和 Linux 上关闭最后一个窗口后应用退出，macOS 遵循保留应用进程的常规行为。
+- 标签栏右侧提供自定义全屏/退出全屏、最小化、最大化/还原和关闭按钮；`F11` 也可切换全屏。Windows 和 Linux 上关闭最后一个窗口后应用退出，macOS 遵循保留应用进程的常规行为。
 - 主页按钮把当前标签恢复为本地新标签页。
 - 页面通过 `window.open` 等方式请求 HTTP(S) 新窗口时，普通模式会创建新标签页，单页模式会在当前标签页打开。其他协议会被拒绝。
 - 新标签页最多保存六条最近地址。“清除记录”会清除整个 Electron 会话的 HTTP 缓存、Cookie、站点存储、Service Worker 和最近地址，也会移除本地保存的主题偏好，并可能使已登录站点退出。
@@ -169,10 +168,10 @@ Box.exe --url=http://192.168.1.10 --fullscreen=true --always-on-top=true
 ## 项目结构
 
 ```text
-src/       Vue 浏览器外壳、新标签页、路由、主题和最近地址
+src/       Vue 浏览器外壳、新标签页、主题 Token 和最近地址
 electron/  Electron 主进程、标签页视图、预加载、IPC、配置和会话策略
 shared/    跨进程类型和 HTTP URL 规范化
-assets/    构建所需图标和 README 截图
+assets/    构建所需的应用图标
 ```
 
 启动链路为 `electron/main.ts` → `electron/app-lifecycle.ts` → `electron/window-manager.ts`。浏览器外壳保留在主窗口中，每个远程标签页运行在独立的 `WebContentsView` 中。两者都启用上下文隔离并关闭 Node 集成；远程标签页不加载预加载脚本。需要特权能力时保持以下固定边界：

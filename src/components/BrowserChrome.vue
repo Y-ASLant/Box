@@ -8,7 +8,9 @@ import {
   House,
   LoaderCircle,
   LockKeyhole,
+  Maximize,
   Minus,
+  Minimize,
   Moon,
   Plus,
   RotateCw,
@@ -35,20 +37,25 @@ const address = ref('');
 const addressInput = ref<HTMLInputElement | null>(null);
 const isEditingAddress = ref(false);
 const isMaximized = ref(false);
+const isFullscreen = ref(false);
 const { toggleTheme, isDarkMode } = useTheme();
 const activeTab = computed(() => props.state.tabs.find(tab => tab.id === props.state.activeTabId) ?? null);
-let removeMaximizedListener: (() => void) | undefined;
+let removeWindowStateListener: (() => void) | undefined;
 
 onMounted(async () => {
   if (!window.electronAPI) return;
   const windowState = await window.electronAPI.getWindowState();
-  if (windowState) isMaximized.value = windowState.maximized;
-  removeMaximizedListener = window.electronAPI.onWindowMaximizedChanged(maximized => {
-    isMaximized.value = maximized;
+  if (windowState) {
+    isMaximized.value = windowState.maximized;
+    isFullscreen.value = windowState.fullscreen;
+  }
+  removeWindowStateListener = window.electronAPI.onWindowStateChanged(state => {
+    isMaximized.value = state.maximized;
+    isFullscreen.value = state.fullscreen;
   });
 });
 
-onBeforeUnmount(() => removeMaximizedListener?.());
+onBeforeUnmount(() => removeWindowStateListener?.());
 
 watch(() => activeTab.value?.url, url => {
   if (!isEditingAddress.value) address.value = url ?? '';
@@ -73,6 +80,7 @@ const handleAddressBlur = () => {
 
 const minimizeWindow = () => window.electronAPI?.minimizeWindow();
 const toggleMaximizeWindow = () => window.electronAPI?.toggleMaximizeWindow();
+const toggleFullscreenWindow = () => window.electronAPI?.toggleFullscreenWindow();
 const closeWindow = () => window.electronAPI?.closeWindow();
 
 defineExpose({ focusAddress });
@@ -81,7 +89,6 @@ defineExpose({ focusAddress });
 <template>
   <header class="browser-chrome">
     <div class="tab-strip" role="tablist" aria-label="标签页">
-      <div class="brand-mark" aria-label="Box">B</div>
       <div class="tabs-scroll">
         <div
           v-for="tab in state.tabs"
@@ -110,6 +117,15 @@ defineExpose({ focusAddress });
       </button>
       <div class="tab-strip-spacer"></div>
       <div class="window-controls" aria-label="窗口控制">
+        <button
+          class="window-button fullscreen-button"
+          :aria-label="isFullscreen ? '退出全屏' : '进入全屏'"
+          :title="isFullscreen ? '退出全屏 (F11)' : '全屏 (F11)'"
+          @click="toggleFullscreenWindow"
+        >
+          <Minimize v-if="isFullscreen" :size="15" :stroke-width="1.7" aria-hidden="true" />
+          <Maximize v-else :size="15" :stroke-width="1.7" aria-hidden="true" />
+        </button>
         <button class="window-button" aria-label="最小化" title="最小化" @click="minimizeWindow">
           <Minus :size="16" :stroke-width="1.7" aria-hidden="true" />
         </button>
@@ -185,40 +201,26 @@ defineExpose({ focusAddress });
 .browser-chrome {
   position: relative;
   z-index: 10;
-  height: 112px;
-  color: var(--chrome-text);
-  background: var(--chrome-bg);
-  border-bottom: 1px solid var(--chrome-border);
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  height: var(--shell-chrome-height);
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-divider);
 }
 .tab-strip {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  height: 44px;
-  padding: 7px 10px 0;
-  background: var(--tab-strip-bg);
+  gap: var(--space-1);
+  height: var(--shell-titlebar-height);
+  padding: 0.4375rem var(--space-3) 0;
+  background: var(--color-titlebar);
   -webkit-app-region: drag;
-}
-.brand-mark {
-  display: grid;
-  flex: 0 0 30px;
-  width: 30px;
-  height: 30px;
-  margin: 0 4px 4px 1px;
-  place-items: center;
-  border-radius: 9px;
-  color: #fff;
-  background: linear-gradient(145deg, #3478f6, #6558ef);
-  font-size: 15px;
-  font-weight: 750;
-  box-shadow: 0 5px 14px rgba(70, 92, 230, 0.25);
 }
 .tabs-scroll {
   display: flex;
   min-width: 0;
-  max-width: min(900px, calc(100vw - 190px));
-  gap: 3px;
+  max-width: min(56.25rem, calc(100vw - 15rem));
+  gap: var(--space-1);
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-app-region: no-drag;
@@ -229,27 +231,29 @@ defineExpose({ focusAddress });
   align-items: center;
   min-width: 150px;
   max-width: 230px;
-  height: 36px;
-  gap: 9px;
-  padding: 0 9px 0 12px;
+  height: var(--control-height-md);
+  gap: var(--space-2);
+  padding: 0 var(--space-2) 0 var(--space-3);
   border: 0;
-  border-radius: 10px 10px 0 0;
-  color: var(--chrome-muted);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  color: var(--color-text-muted);
   background: transparent;
   font: inherit;
   cursor: pointer;
-  transition: color 140ms ease, background 140ms ease;
+  transition:
+    color var(--duration-normal) var(--ease-standard),
+    background var(--duration-normal) var(--ease-standard);
 }
-.browser-tab:hover { background: var(--tab-hover); }
-.browser-tab.active { color: var(--chrome-text); background: var(--chrome-bg); }
+.browser-tab:hover { background: var(--color-tab-hover); }
+.browser-tab.active { color: var(--color-text-primary); background: var(--color-surface); }
 .tab-favicon {
   flex: 0 0 18px;
-  color: #5f6ee8;
+  color: var(--color-accent);
 }
 .tab-loader {
   flex: 0 0 16px;
-  color: #5b6ee1;
-  animation: spin 800ms linear infinite;
+  color: var(--color-accent);
+  animation: spin var(--duration-spinner) linear infinite;
 }
 .tab-title {
   min-width: 0;
@@ -258,8 +262,8 @@ defineExpose({ focusAddress });
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12.5px;
-  font-weight: 520;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 .tab-close {
   display: grid;
@@ -269,32 +273,35 @@ defineExpose({ focusAddress });
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: inherit;
   background: transparent;
   cursor: pointer;
 }
-.tab-close:hover { background: var(--control-hover); }
+.tab-close:hover { background: var(--color-control-hover); }
 .new-tab-button,
 .icon-button {
   display: grid;
   place-items: center;
   border: 0;
-  color: var(--chrome-muted);
+  color: var(--color-text-muted);
   background: transparent;
   font-family: inherit;
   cursor: pointer;
-  transition: color 140ms ease, background 140ms ease, transform 100ms ease;
+  transition:
+    color var(--duration-normal) var(--ease-standard),
+    background var(--duration-normal) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 }
 .new-tab-button {
   width: 32px;
   height: 32px;
   margin: 0 0 2px 2px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   -webkit-app-region: no-drag;
 }
 .new-tab-button:hover,
-.icon-button:hover:not(:disabled) { color: var(--chrome-text); background: var(--control-hover); }
+.icon-button:hover:not(:disabled) { color: var(--color-text-primary); background: var(--color-control-hover); }
 .new-tab-button:active,
 .icon-button:active:not(:disabled) { transform: scale(0.94); }
 .tab-strip-spacer { flex: 1; align-self: stretch; }
@@ -306,31 +313,33 @@ defineExpose({ focusAddress });
 }
 .window-button {
   display: grid;
-  width: 46px;
+  width: var(--shell-window-button-width);
   height: 43px;
   padding: 0;
   place-items: center;
   border: 0;
-  color: var(--chrome-muted);
+  color: var(--color-text-muted);
   background: transparent;
   cursor: pointer;
-  transition: color 120ms ease, background 120ms ease;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
 }
-.window-button:hover { color: var(--chrome-text); background: var(--control-hover); }
-.close-button:hover { color: #fff; background: #e5484d; }
+.window-button:hover { color: var(--color-text-primary); background: var(--color-control-hover); }
+.close-button:hover { color: var(--color-on-accent); background: var(--color-danger); }
 .navigation-bar {
   display: flex;
   align-items: center;
-  height: 68px;
-  gap: 12px;
-  padding: 10px 14px 14px;
-  background: var(--chrome-bg);
+  height: var(--shell-navigation-height);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  background: var(--color-surface);
 }
-.navigation-actions { display: flex; gap: 4px; }
+.navigation-actions { display: flex; gap: var(--space-1); }
 .icon-button {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--radius-md);
 }
 .icon-button:disabled { opacity: 0.32; cursor: default; }
 .theme-button { flex: 0 0 38px; }
@@ -338,34 +347,39 @@ defineExpose({ focusAddress });
   display: flex;
   align-items: center;
   min-width: 160px;
-  height: 42px;
+  height: var(--control-height-lg);
   flex: 1;
-  gap: 10px;
-  padding: 0 14px;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
   border: 1px solid transparent;
-  border-radius: 13px;
-  background: var(--address-bg);
-  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+  transition:
+    border-color var(--duration-normal) var(--ease-standard),
+    background var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard);
 }
 .address-form:focus-within {
-  border-color: #6d7df0;
-  background: var(--bg-primary);
-  box-shadow: 0 0 0 3px rgba(93, 111, 226, 0.13);
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-focus);
 }
 .site-indicator {
   flex: 0 0 15px;
-  color: #8b94a5;
+  color: var(--color-text-muted);
 }
-.site-indicator.secure { color: #2f9565; }
+.site-indicator.secure { color: var(--color-success); }
 .address-input {
   min-width: 0;
   width: 100%;
   border: 0;
   outline: 0;
-  color: var(--chrome-text);
+  color: var(--color-text-primary);
   background: transparent;
-  font: 500 13.5px/1.4 inherit;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
 }
-.address-input::placeholder { color: var(--chrome-placeholder); }
+.address-input::placeholder { color: var(--color-text-placeholder); }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>

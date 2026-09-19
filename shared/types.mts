@@ -1,19 +1,6 @@
 // 共享类型定义文件
 // 统一管理项目中使用的所有 TypeScript 接口和类型
 
-export const HIDDEN_CONTROL_NAMES = [
-  'control',
-  'theme',
-  'scroll',
-  'mouse',
-  'home',
-  'minimize',
-  'maximize',
-  'close',
-  'fullscreen'
-] as const;
-
-export type HiddenControl = typeof HIDDEN_CONTROL_NAMES[number];
 export type ThemeName = 'light' | 'dark';
 export type CompatibilityMode = 'standard' | 'permissive';
 
@@ -33,7 +20,6 @@ export interface ResolvedConfig {
   alwaysOnTop: boolean;
   singlePage: boolean;
   theme: ThemeName | null;
-  hiddenControls: HiddenControl[];
   backgroundPath: string | null;
   compatibilityMode: CompatibilityMode;
   configPath: string;
@@ -42,7 +28,6 @@ export interface ResolvedConfig {
 /** 允许暴露给本地 Vue 页面的最小配置 */
 export interface RendererConfig {
   theme: ThemeName | null;
-  hiddenControls: HiddenControl[];
 }
 
 /** 顶部浏览器外壳展示的标签页状态 */
@@ -61,8 +46,8 @@ export interface BrowserState {
   activeTabId: string | null;
 }
 
-/** 错误页面属性 */
-export interface ErrorPageProps {
-  message?: string;
-  isSubWindow?: boolean;
+/** 自定义标题栏需要同步的窗口状态 */
+export interface WindowState {
+  maximized: boolean;
+  fullscreen: boolean;
 }
