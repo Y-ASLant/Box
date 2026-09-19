@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BrowserState, BrowserTabState, TabDropPosition } from '../shared/types.mts';
 import { reorderIds } from '../shared/tab-order.mts';
 import { BrowserChrome, type BrowserChromeHandle } from './components/BrowserChrome';
+import { BrowserErrorPage } from './views/BrowserErrorPage';
 import { NewTabPage } from './views/NewTabPage';
 import { SettingsPage } from './views/SettingsPage';
 
@@ -17,7 +18,7 @@ const PREVIEW_BROWSER_STATE: BrowserState = {
 };
 
 function createPreviewTab(id: string, title: string): BrowserTabState {
-  return { id, title, url: null, loading: false, canGoBack: false, canGoForward: false };
+  return { id, title, url: null, error: null, loading: false, canGoBack: false, canGoForward: false };
 }
 
 function reorderTabs(
@@ -37,6 +38,7 @@ export default function App() {
   const [browserState, setBrowserState] = useState<BrowserState>(EMPTY_BROWSER_STATE);
   const [localPage, setLocalPage] = useState<'browser' | 'settings'>('browser');
   const activeTabId = browserState.activeTabId;
+  const activeTab = browserState.tabs.find(tab => tab.id === activeTabId) ?? null;
 
   const showBrowser = useCallback(() => {
     setLocalPage('browser');
@@ -149,9 +151,18 @@ export default function App() {
         onOpenSettings={showSettings}
       />
       <Box minHeight="0" overflow="auto" bg="bg.subtle" scrollbarColor="border.emphasized transparent">
-        {localPage === 'settings'
-          ? <SettingsPage onClose={showBrowser} />
-          : <NewTabPage onNavigate={navigate} />}
+        {localPage === 'settings' ? (
+          <SettingsPage onClose={showBrowser} />
+        ) : activeTab?.error ? (
+          <BrowserErrorPage
+            error={activeTab.error}
+            url={activeTab.url ?? activeTab.error.url}
+            onRetry={reload}
+            onHome={home}
+          />
+        ) : (
+          <NewTabPage onNavigate={navigate} />
+        )}
       </Box>
     </Grid>
   );

@@ -20,7 +20,7 @@
     "preview": "vite preview",
     "check": "tsc -p tsconfig.json && pnpm run check:node",
     "check:node": "tsc -p tsconfig.node.json",
-    "test": "node --test electron/app-config.test.mts shared/url.test.mts shared/tab-order.test.mts",
+    "test": "node --test electron/app-config.test.mts shared/url.test.mts shared/tab-order.test.mts shared/load-error.test.mts",
     "build": "pnpm run test && pnpm run check && vite build",
     "prebuild:electron": "pnpm run electron:install",
     "build:electron": "pnpm run test && pnpm run check && vite build --config electron.vite.config.mjs && electron-builder --publish never",

@@ -6,6 +6,12 @@ export type ThemePreference = ThemeName | 'system';
 export type CompatibilityMode = 'standard' | 'permissive';
 export type TabDropPosition = 'before' | 'after';
 
+export interface BrowserLoadError {
+  code: number;
+  description: string;
+  url: string;
+}
+
 /** 本地设置页持久化的用户偏好 */
 export interface AppSettings {
   theme: ThemePreference;
@@ -43,6 +49,7 @@ export interface BrowserTabState {
   id: string;
   title: string;
   url: string | null;
+  error: BrowserLoadError | null;
   loading: boolean;
   canGoBack: boolean;
   canGoForward: boolean;

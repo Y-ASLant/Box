@@ -83,7 +83,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - `tsconfig.json` — strict React renderer configuration selected by `tsc`.
 - `tsconfig.node.json` — strict Electron/shared/Vite-config check invoked by `pnpm check`.
 - `electron/app-config.mts` and `electron/app-config.test.mts` — typed config loading, compatibility migration, CLI merging, path resolution, and tests.
-- `shared/types.mts`, `shared/url.mts`, `shared/url.test.mts`, `shared/tab-order.mts`, `shared/tab-order.test.mts` — cross-boundary browser/tab contracts, tested HTTP(S) normalization, and pure tab-order rules.
+- `shared/types.mts`, `shared/url.mts`, `shared/url.test.mts`, `shared/tab-order.mts`, `shared/tab-order.test.mts`, `shared/load-error.mts`, `shared/load-error.test.mts` — cross-boundary browser/tab contracts, tested HTTP(S) normalization, pure tab-order rules, and user-facing load-error messages.
 - `electron/app-lifecycle.ts`, `electron/window-manager.ts`, `electron/preload.ts`, `electron/ipc-handlers.ts` — main runtime and trust boundary.
 - `README.md` — user-facing commands, CLI/config flags, themes, and manual behavior examples.
 
@@ -101,7 +101,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 
 ## Testing & QA
 
-- `pnpm test` uses the Node.js built-in test runner for config parsing/precedence/path behavior, HTTP(S) URL normalization, and pure tab-order rules. There is no linter, formatter, or coverage setup. CI validates workflows, tests, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
+- `pnpm test` uses the Node.js built-in test runner for config parsing/precedence/path behavior, HTTP(S) URL normalization, pure tab-order rules, and load-error messages. There is no linter, formatter, or coverage setup. CI validates workflows, tests, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
 - `pnpm check` is the repository-wide static gate: `tsc -p tsconfig.json` checks the React renderer, then `tsc -p tsconfig.node.json` checks Electron, shared code, and Vite configs.
 - For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include creating/switching/closing tabs, URL navigation/load failure, back/forward/reload/home, popup-to-tab behavior, valid and invalid config/CLI precedence, session/cache clearing, fullscreen/always-on-top behavior, custom backgrounds, and `Ctrl/Cmd + T/W/L` shortcuts.
 - For packaging changes, use the checked `pnpm build:electron` or the relevant platform script and verify the expected files under `build/`.

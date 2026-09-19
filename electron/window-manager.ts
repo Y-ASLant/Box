@@ -2,6 +2,7 @@ import { BrowserWindow, Menu, WebContentsView, app } from 'electron';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type {
+  BrowserLoadError,
   BrowserState,
   BrowserTabState,
   TabDropPosition,
@@ -19,6 +20,7 @@ interface ManagedTab {
   id: string;
   title: string;
   url: string | null;
+  error: BrowserLoadError | null;
   view: WebContentsView | null;
 }
 
@@ -63,6 +65,7 @@ function getTabState(tab: ManagedTab): BrowserTabState {
     id: tab.id,
     title: tab.title,
     url: tab.url,
+    error: tab.error,
     loading: tab.view?.webContents.isLoading() ?? false,
     canGoBack: navigationHistory?.canGoBack() ?? false,
     canGoForward: navigationHistory?.canGoForward() ?? false
@@ -102,7 +105,7 @@ function showActiveView() {
   }
 
   const activeTab = activeTabId ? tabs.get(activeTabId) : null;
-  if (!localPageVisible && activeTab?.view) {
+  if (!localPageVisible && activeTab?.view && !activeTab.error) {
     mainWindow.contentView.addChildView(activeTab.view);
     layoutActiveView();
   }
@@ -123,10 +126,25 @@ export function setWindowAlwaysOnTop(alwaysOnTop: boolean): boolean {
 
 function updateTabFromWebContents(tab: ManagedTab) {
   if (!tab.view || tab.view.webContents.isDestroyed()) return;
+  if (tab.error) {
+    publishBrowserState();
+    return;
+  }
   const currentUrl = tab.view.webContents.getURL();
   if (isHttpUrl(currentUrl)) tab.url = currentUrl;
   tab.title = tab.view.webContents.getTitle().trim() || tab.url || NEW_TAB_TITLE;
   publishBrowserState();
+}
+
+function markTabLoadFailed(tab: ManagedTab, code: number, description: string, url: string) {
+  tab.error = {
+    code,
+    description: description.replace(/^net::/, '') || 'ERR_FAILED',
+    url: url || tab.url || ''
+  };
+  tab.title = '无法访问此页面';
+  if (activeTabId === tab.id) showActiveView();
+  else publishBrowserState();
 }
 
 function createTabView(tab: ManagedTab): WebContentsView {
@@ -143,16 +161,27 @@ function createTabView(tab: ManagedTab): WebContentsView {
   view.setBackgroundColor('#ffffff');
   view.webContents.on('page-title-updated', (event, title) => {
     event.preventDefault();
+    if (tab.error) return;
     tab.title = title.trim() || tab.url || NEW_TAB_TITLE;
     publishBrowserState();
+  });
+  view.webContents.on('did-start-navigation', (_event, url, _isInPlace, isMainFrame) => {
+    if (!isMainFrame) return;
+    tab.error = null;
+    if (isHttpUrl(url)) tab.url = url;
+    if (activeTabId === tab.id) showActiveView();
+    else publishBrowserState();
+  });
+  view.webContents.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
+    if (!isMainFrame || code === -3) return;
+    markTabLoadFailed(tab, code, description, url);
   });
   view.webContents.on('did-start-loading', publishBrowserState);
   view.webContents.on('did-stop-loading', () => updateTabFromWebContents(tab));
   view.webContents.on('did-navigate', () => updateTabFromWebContents(tab));
   view.webContents.on('did-navigate-in-page', () => updateTabFromWebContents(tab));
   view.webContents.on('render-process-gone', () => {
-    tab.title = '页面无响应';
-    publishBrowserState();
+    markTabLoadFailed(tab, 0, 'RENDER_PROCESS_GONE', tab.url ?? '');
   });
   view.webContents.on('before-input-event', (event, input) => {
     const key = input.key.toLowerCase();
@@ -193,7 +222,7 @@ function createTabView(tab: ManagedTab): WebContentsView {
 
 export function createBrowserTab(url?: string | null, activate = true): BrowserState {
   const id = `tab-${nextTabId++}`;
-  const tab: ManagedTab = { id, title: NEW_TAB_TITLE, url: null, view: null };
+  const tab: ManagedTab = { id, title: NEW_TAB_TITLE, url: null, error: null, view: null };
   tabs.set(id, tab);
   if (activate || !activeTabId) activeTabId = id;
 
@@ -215,6 +244,7 @@ export async function navigateBrowserTab(tabId: string, input: string): Promise<
 
   tab.url = url;
   tab.title = url;
+  tab.error = null;
   const view = tab.view ?? createTabView(tab);
   if (activeTabId === tabId) showActiveView();
   try {
@@ -222,8 +252,15 @@ export async function navigateBrowserTab(tabId: string, input: string): Promise<
     return true;
   } catch (error) {
     console.error(`加载 URL 失败: ${url}`, error);
-    tab.title = '无法访问此页面';
-    publishBrowserState();
+    if (!tab.error) {
+      const loadError = error as { code?: string; errno?: number; message?: string };
+      markTabLoadFailed(
+        tab,
+        typeof loadError.errno === 'number' ? loadError.errno : 0,
+        loadError.code ?? loadError.message ?? 'ERR_FAILED',
+        url
+      );
+    }
     return false;
   }
 }
@@ -280,7 +317,13 @@ export function navigateHistory(tabId: string, direction: 'back' | 'forward'): b
 }
 
 export function reloadBrowserTab(tabId: string): boolean {
-  const contents = tabs.get(tabId)?.view?.webContents;
+  const tab = tabs.get(tabId);
+  if (!tab) return false;
+  if (tab.error && tab.url) {
+    void navigateBrowserTab(tab.id, tab.url);
+    return true;
+  }
+  const contents = tab.view?.webContents;
   if (!contents) return false;
   if (contents.isLoading()) contents.stop();
   else contents.reload();
@@ -296,6 +339,7 @@ export function openNewTabPage(tabId: string): boolean {
   }
   tab.view = null;
   tab.url = null;
+  tab.error = null;
   tab.title = NEW_TAB_TITLE;
   if (activeTabId === tabId) showActiveView();
   return true;

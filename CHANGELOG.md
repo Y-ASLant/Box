@@ -19,6 +19,10 @@
 - 更新 Vite、TypeScript、Lucide 与文档中的 renderer 架构说明，同时保持 Electron IPC 边界和远程页面隔离。
 - 清除浏览数据时保留应用设置，避免主题与浏览行为偏好被意外重置。
 
+### 修复
+
+- 网页主文档加载失败时不再显示空白区域，改为展示错误原因、失败地址以及重新加载和返回新标签页操作。
+
 ### 移除
 
 - 移除单页模式及其设置项、运行时分支、配置字段和命令行参数，HTTP(S) 新窗口统一创建为新标签页。
@@ -97,6 +101,10 @@ This file records changes to Box (Browser Plus). Its format follows [Keep a Chan
 - Reworked the settings page into a compact responsive two-column card layout with clearer header, grouping, and control hierarchy.
 - Updated the Vite, TypeScript, Lucide, and documentation renderer architecture while preserving the Electron IPC boundary and remote-page isolation.
 - Browsing-data cleanup now preserves application settings so theme and browser-behavior preferences are not reset unexpectedly.
+
+### Fixed
+
+- Replaced the blank content area after a failed main-document load with a clear error reason, failed URL, retry action, and return-to-new-tab action.
 
 ### Removed
 

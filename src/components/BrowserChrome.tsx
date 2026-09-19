@@ -11,6 +11,7 @@ import {
 import {
   ArrowLeft,
   ArrowRight,
+  CircleAlert,
   Copy,
   Globe,
   House,
@@ -232,6 +233,10 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
                   <Tabs.Trigger value={tab.id} width="52" maxWidth="52" pe="9">
                     {tab.loading ? (
                       <Spinner size="xs" colorPalette="blue" />
+                    ) : tab.error ? (
+                      <Box as="span" display="inline-flex" color="red.fg">
+                        <CircleAlert size={16} strokeWidth={1.9} aria-hidden />
+                      </Box>
                     ) : tab.url ? (
                       <Globe size={16} strokeWidth={1.9} aria-hidden />
                     ) : (
