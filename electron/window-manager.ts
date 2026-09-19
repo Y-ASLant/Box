@@ -1,8 +1,15 @@
 import { BrowserWindow, Menu, WebContentsView, app } from 'electron';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { BrowserState, BrowserTabState, WindowOptions, WindowState } from '../shared/types.mts';
+import type {
+  BrowserState,
+  BrowserTabState,
+  TabDropPosition,
+  WindowOptions,
+  WindowState
+} from '../shared/types.mts';
 import { isHttpUrl, normalizeHttpUrl } from '../shared/url.mts';
+import { reorderIds } from '../shared/tab-order.mts';
 
 const BROWSER_CHROME_HEIGHT = 97;
 const CUSTOM_FRAME_BORDER = 1;
@@ -239,6 +246,17 @@ export function activateBrowserTab(tabId: string): boolean {
   if (!tabs.has(tabId)) return false;
   activeTabId = tabId;
   showActiveView();
+  return true;
+}
+
+export function reorderBrowserTab(tabId: string, targetTabId: string, position: TabDropPosition): boolean {
+  const orderedIds = reorderIds([...tabs.keys()], tabId, targetTabId, position);
+  if (!orderedIds) return false;
+
+  const orderedTabs = orderedIds.map(id => [id, tabs.get(id)!] as const);
+  tabs.clear();
+  for (const [id, tab] of orderedTabs) tabs.set(id, tab);
+  publishBrowserState();
   return true;
 }
 

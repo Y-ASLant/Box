@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { BrowserState, RuntimeSettings, WindowState } from '../shared/types.mts';
+import type { BrowserState, RuntimeSettings, TabDropPosition, WindowState } from '../shared/types.mts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getBrowserState: () => ipcRenderer.invoke('browser:get-state'),
@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   goForward: (tabId: string) => ipcRenderer.invoke('browser:go-forward', tabId),
   reload: (tabId: string) => ipcRenderer.invoke('browser:reload', tabId),
   openNewTabPage: (tabId: string) => ipcRenderer.invoke('browser:new-tab-page', tabId),
+  reorderTab: (tabId: string, targetTabId: string, position: TabDropPosition) => (
+    ipcRenderer.invoke('browser:reorder-tab', tabId, targetTabId, position)
+  ),
   setLocalPageVisible: (visible: boolean) => ipcRenderer.invoke('browser:set-local-page-visible', visible),
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
   toggleMaximizeWindow: () => ipcRenderer.invoke('window:toggle-maximize'),

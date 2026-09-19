@@ -27,8 +27,8 @@ import {
   X
 } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import type { FormEvent, MouseEvent, ReactNode } from 'react';
-import type { BrowserState } from '../../shared/types.mts';
+import type { DragEvent, FormEvent, MouseEvent, ReactNode } from 'react';
+import type { BrowserState, TabDropPosition } from '../../shared/types.mts';
 import { useAppSettings } from '../hooks/use-app-settings';
 
 export interface BrowserChromeHandle {
@@ -40,6 +40,7 @@ interface BrowserChromeProps {
   onCreateTab: () => void | Promise<void>;
   onActivateTab: (tabId: string) => void;
   onCloseTab: (tabId: string) => void;
+  onReorderTab: (tabId: string, targetTabId: string, position: TabDropPosition) => void;
   onNavigate: (url: string) => void | Promise<void>;
   onGoBack: () => void;
   onGoForward: () => void;
@@ -54,6 +55,7 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
   onCreateTab,
   onActivateTab,
   onCloseTab,
+  onReorderTab,
   onNavigate,
   onGoBack,
   onGoForward,
@@ -67,6 +69,8 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ tabId: string; position: TabDropPosition } | null>(null);
   const { isDarkMode, toggleTheme } = useAppSettings();
   const activeTab = useMemo(
     () => state.tabs.find(tab => tab.id === state.activeTabId) ?? null,
@@ -119,6 +123,45 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
     onCloseTab(tabId);
   };
 
+  const dragTab = (event: DragEvent<HTMLDivElement>, tabId: string) => {
+    if ((event.target as HTMLElement).closest('[data-tab-close]')) {
+      event.preventDefault();
+      return;
+    }
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('application/x-box-tab', tabId);
+    setDraggedTabId(tabId);
+  };
+
+  const dragOverTab = (event: DragEvent<HTMLDivElement>, tabId: string) => {
+    const sourceTabId = event.dataTransfer.getData('application/x-box-tab') || draggedTabId;
+    if (!sourceTabId || sourceTabId === tabId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const position = event.clientX < bounds.left + bounds.width / 2 ? 'before' : 'after';
+    setDropTarget(current => (
+      current?.tabId === tabId && current.position === position ? current : { tabId, position }
+    ));
+  };
+
+  const dropTab = (event: DragEvent<HTMLDivElement>, targetTabId: string) => {
+    event.preventDefault();
+    const sourceTabId = event.dataTransfer.getData('application/x-box-tab') || draggedTabId;
+    if (sourceTabId && sourceTabId !== targetTabId) {
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const position = event.clientX < bounds.left + bounds.width / 2 ? 'before' : 'after';
+      onReorderTab(sourceTabId, targetTabId, position);
+    }
+    setDraggedTabId(null);
+    setDropTarget(null);
+  };
+
+  const finishDraggingTab = () => {
+    setDraggedTabId(null);
+    setDropTarget(null);
+  };
+
   const siteIndicator = activeTab?.url?.startsWith('https://')
     ? <LockKeyhole size={16} strokeWidth={1.8} aria-hidden />
     : <Globe size={16} strokeWidth={1.8} aria-hidden />;
@@ -157,36 +200,65 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
             overflowX="auto"
             scrollbarWidth="none"
           >
-            {state.tabs.map(tab => (
-              <Box key={tab.id} position="relative" flex="0 0 auto">
-                <Tabs.Trigger value={tab.id} width="52" maxWidth="52" pe="9">
-                  {tab.loading ? (
-                    <Spinner size="xs" colorPalette="blue" />
-                  ) : tab.url ? (
-                    <Globe size={16} strokeWidth={1.9} aria-hidden />
-                  ) : (
-                    <Plus size={16} strokeWidth={1.9} aria-hidden />
-                  )}
-                  <Box overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                    {tab.title}
-                  </Box>
-                </Tabs.Trigger>
-                <IconButton
-                  aria-label="关闭标签页"
-                  title="关闭标签页"
-                  position="absolute"
-                  insetEnd="1"
-                  top="50%"
-                  zIndex="1"
-                  size="2xs"
-                  variant="ghost"
-                  transform="translateY(-50%)"
-                  onClick={event => closeTab(event, tab.id)}
+            {state.tabs.map(tab => {
+              const isDropTarget = dropTarget?.tabId === tab.id;
+              return (
+                <Box
+                  key={tab.id}
+                  position="relative"
+                  flex="0 0 auto"
+                  draggable
+                  cursor="grab"
+                  opacity={draggedTabId === tab.id ? '0.6' : '1'}
+                  title="拖动以调整标签位置"
+                  _active={{ cursor: 'grabbing' }}
+                  _before={isDropTarget ? {
+                    content: '""',
+                    position: 'absolute',
+                    zIndex: '2',
+                    top: '1',
+                    bottom: '1',
+                    width: '0.5',
+                    borderRadius: 'full',
+                    bg: 'blue.solid',
+                    ...(dropTarget.position === 'before' ? { insetStart: '-1' } : { insetEnd: '-1' })
+                  } : undefined}
+                  onDragStart={event => dragTab(event, tab.id)}
+                  onDragOver={event => dragOverTab(event, tab.id)}
+                  onDrop={event => dropTab(event, tab.id)}
+                  onDragEnd={finishDraggingTab}
                 >
-                  <X aria-hidden />
-                </IconButton>
-              </Box>
-            ))}
+                  <Tabs.Trigger value={tab.id} width="52" maxWidth="52" pe="9">
+                    {tab.loading ? (
+                      <Spinner size="xs" colorPalette="blue" />
+                    ) : tab.url ? (
+                      <Globe size={16} strokeWidth={1.9} aria-hidden />
+                    ) : (
+                      <Plus size={16} strokeWidth={1.9} aria-hidden />
+                    )}
+                    <Box overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                      {tab.title}
+                    </Box>
+                  </Tabs.Trigger>
+                  <IconButton
+                    aria-label="关闭标签页"
+                    title="关闭标签页"
+                    position="absolute"
+                    insetEnd="1"
+                    top="50%"
+                    zIndex="1"
+                    size="2xs"
+                    variant="ghost"
+                    transform="translateY(-50%)"
+                    data-tab-close
+                    draggable={false}
+                    onClick={event => closeTab(event, tab.id)}
+                  >
+                    <X aria-hidden />
+                  </IconButton>
+                </Box>
+              );
+            })}
           </Tabs.List>
         </Tabs.Root>
 
@@ -239,7 +311,7 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
         </ButtonGroup>
       </Flex>
 
-      <Flex align="center" height="13" gap="2" px="1.5" bg="bg">
+      <Flex align="center" height="13" gap="2" p="1.5" bg="bg">
         <ButtonGroup as="nav" aria-label="网页导航" variant="ghost" size="sm">
           <NavigationButton label="后退" disabled={!activeTab?.canGoBack} onClick={onGoBack}>
             <ArrowLeft aria-hidden />

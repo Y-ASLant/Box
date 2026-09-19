@@ -1,6 +1,12 @@
 /// <reference types="vite/client" />
 
-import type { BrowserState, RendererConfig, RuntimeSettings, WindowState } from '../shared/types.mts';
+import type {
+  BrowserState,
+  RendererConfig,
+  RuntimeSettings,
+  TabDropPosition,
+  WindowState
+} from '../shared/types.mts';
 
 declare global {
   interface ElectronAPI {
@@ -13,6 +19,7 @@ declare global {
     goForward: (tabId: string) => Promise<boolean>;
     reload: (tabId: string) => Promise<boolean>;
     openNewTabPage: (tabId: string) => Promise<boolean>;
+    reorderTab: (tabId: string, targetTabId: string, position: TabDropPosition) => Promise<boolean>;
     setLocalPageVisible: (visible: boolean) => Promise<boolean>;
     minimizeWindow: () => Promise<boolean>;
     toggleMaximizeWindow: () => Promise<boolean>;

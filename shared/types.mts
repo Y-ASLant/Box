@@ -4,6 +4,7 @@
 export type ThemeName = 'light' | 'dark';
 export type ThemePreference = ThemeName | 'system';
 export type CompatibilityMode = 'standard' | 'permissive';
+export type TabDropPosition = 'before' | 'after';
 
 /** 本地设置页持久化的用户偏好 */
 export interface AppSettings {

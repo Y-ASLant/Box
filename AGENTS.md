@@ -10,7 +10,7 @@ Treat Electron security behavior as load-bearing. The default `permissive` compa
 
 - `electron/main.ts` calls `initializeApp()` in `electron/app-lifecycle.ts`.
 - Startup resolves one `ResolvedConfig` before Electron becomes ready, applies its compatibility/session policy, registers IPC, then creates windows. Development reads `process.cwd()/config.json`; packaged builds read beside `process.execPath`; `-config` can override the path. Precedence is defaults, then file, then CLI.
-- `electron/window-manager.ts` owns the frameless main `BrowserWindow`, `WebContentsView` tabs, active-tab layout, navigation history, page titles, new-window handling, shortcuts, and cleanup. The React tab strip provides the custom drag region, visible border, and window controls.
+- `electron/window-manager.ts` owns the frameless main `BrowserWindow`, ordered `WebContentsView` tabs, active-tab layout, navigation history, page titles, new-window handling, shortcuts, and cleanup. The React tab strip provides tab drag-to-reorder, the custom window drag region, visible border, and window controls.
 - The React renderer starts at `src/main.tsx`. `src/App.tsx` keeps the browser shell mounted; `src/views/NewTabPage.tsx` is the local new-tab page. Browser commands flow through the typed preload bridge to the main-process tab manager.
 - Privileged flow must remain: React component/hook → typed `window.electronAPI` in `src/vite-env.d.ts` → fixed bridge method/channel in `electron/preload.ts` → handler in `electron/ipc-handlers.ts` → Electron operation.
 - HTTP(S) new-window requests become tabs, or reuse the current tab in `singlePage` mode; other protocols are denied.
@@ -65,7 +65,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - Reuse functional seams: explicit parameters such as `BrowserWindow`, pure config parsing, module getters, React hooks, and guard clauses. There is no DI container, class service layer, global client store, or second state system.
 - Before window operations, check null/destroyed state. Use `async`/`await` with `try/catch` for user-visible operations; use Promise `.catch(...)` for fire-and-observe Electron calls. Log unexpected injection, configuration, and session failures; swallow only documented non-critical failures.
 - For new IPC behavior, expose a fixed preload method rather than raw `ipcRenderer`, add types to `src/vite-env.d.ts` or `shared/types.mts`, validate inputs/senders, and preserve context isolation.
-- Keep browser-shell state changes in the existing `window-manager.ts` tab helpers and publish a full `BrowserState` snapshot after relevant navigation changes.
+- Keep browser-shell state changes in the existing `window-manager.ts` tab helpers and publish a full `BrowserState` snapshot after relevant navigation or tab-order changes.
 - Comments and user-facing messages are predominantly Simplified Chinese. Preserve that convention for UI/docs unless intentionally changing project language.
 
 ## Important Files
@@ -83,7 +83,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - `tsconfig.json` — strict React renderer configuration selected by `tsc`.
 - `tsconfig.node.json` — strict Electron/shared/Vite-config check invoked by `pnpm check`.
 - `electron/app-config.mts` and `electron/app-config.test.mts` — typed config loading, compatibility migration, CLI merging, path resolution, and tests.
-- `shared/types.mts`, `shared/url.mts`, `shared/url.test.mts` — cross-boundary browser/tab contracts and tested HTTP(S) normalization.
+- `shared/types.mts`, `shared/url.mts`, `shared/url.test.mts`, `shared/tab-order.mts`, `shared/tab-order.test.mts` — cross-boundary browser/tab contracts, tested HTTP(S) normalization, and pure tab-order rules.
 - `electron/app-lifecycle.ts`, `electron/window-manager.ts`, `electron/preload.ts`, `electron/ipc-handlers.ts` — main runtime and trust boundary.
 - `README.md` — user-facing commands, CLI/config flags, themes, and manual behavior examples.
 
@@ -101,12 +101,12 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 
 ## Testing & QA
 
-- `pnpm test` uses the Node.js built-in test runner for config parsing/precedence/path behavior and HTTP(S) URL normalization. There is no linter, formatter, or coverage setup. CI validates workflows, tests, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
+- `pnpm test` uses the Node.js built-in test runner for config parsing/precedence/path behavior, HTTP(S) URL normalization, and pure tab-order rules. There is no linter, formatter, or coverage setup. CI validates workflows, tests, changelog extraction, static checks, and the renderer build. Package Test and Release provide native package gates but do not replace manual runtime testing.
 - `pnpm check` is the repository-wide static gate: `tsc -p tsconfig.json` checks the React renderer, then `tsc -p tsconfig.node.json` checks Electron, shared code, and Vite configs.
 - For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include creating/switching/closing tabs, URL navigation/load failure, back/forward/reload/home, popup-to-tab behavior, valid and invalid config/CLI precedence, session/cache clearing, fullscreen/always-on-top behavior, custom backgrounds, and `Ctrl/Cmd + T/W/L` shortcuts.
 - For packaging changes, use the checked `pnpm build:electron` or the relevant platform script and verify the expected files under `build/`.
 - Before moving a release tag, run Package Test manually from GitHub Actions when packaging or dependency behavior has changed.
-- Extend the existing Node tests for configuration precedence and URL normalization. If a browser/Electron runner is later added, prioritize IPC validation, theme persistence, tab navigation failures, and window behavior.
+- Extend the existing Node tests for configuration precedence, URL normalization, and tab ordering. If a browser/Electron runner is later added, prioritize IPC validation, theme persistence, tab navigation failures, and window behavior.
 
 ## Release & Changelog Conventions
 

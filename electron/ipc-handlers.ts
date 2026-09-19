@@ -13,11 +13,12 @@ import {
   navigateBrowserTab,
   navigateHistory,
   openNewTabPage,
+  reorderBrowserTab,
   reloadBrowserTab,
   setLocalPageVisible,
   toggleWindowFullscreen
 } from './window-manager';
-import type { ResolvedConfig, RuntimeSettings } from '../shared/types.mts';
+import type { ResolvedConfig, RuntimeSettings, TabDropPosition } from '../shared/types.mts';
 
 const HANDLER_CHANNELS = [
   'browser:get-state',
@@ -29,6 +30,7 @@ const HANDLER_CHANNELS = [
   'browser:go-forward',
   'browser:reload',
   'browser:new-tab-page',
+  'browser:reorder-tab',
   'browser:set-local-page-visible',
   'window:minimize',
   'window:toggle-maximize',
@@ -87,6 +89,15 @@ export function registerIPCHandlers(config: ResolvedConfig) {
   ipcMain.handle('browser:new-tab-page', (event, tabId: unknown) => withLocalSender(event, () => (
     typeof tabId === 'string' && openNewTabPage(tabId)
   )));
+  ipcMain.handle(
+    'browser:reorder-tab',
+    (event, tabId: unknown, targetTabId: unknown, position: unknown) => withLocalSender(event, () => (
+      typeof tabId === 'string'
+      && typeof targetTabId === 'string'
+      && isTabDropPosition(position)
+      && reorderBrowserTab(tabId, targetTabId, position)
+    ))
+  );
   ipcMain.handle('browser:set-local-page-visible', (event, visible: unknown) => withLocalSender(event, () => (
     typeof visible === 'boolean' && setLocalPageVisible(visible)
   )));
@@ -140,4 +151,8 @@ function isRuntimeSettings(value: unknown): value is RuntimeSettings {
   if (!value || typeof value !== 'object') return false;
   const settings = value as Record<string, unknown>;
   return typeof settings.alwaysOnTop === 'boolean' && typeof settings.singlePage === 'boolean';
+}
+
+function isTabDropPosition(value: unknown): value is TabDropPosition {
+  return value === 'before' || value === 'after';
 }

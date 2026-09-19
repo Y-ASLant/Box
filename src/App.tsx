@@ -1,22 +1,36 @@
 import { Box, Grid } from '@chakra-ui/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { BrowserState } from '../shared/types.mts';
+import type { BrowserState, BrowserTabState, TabDropPosition } from '../shared/types.mts';
+import { reorderIds } from '../shared/tab-order.mts';
 import { BrowserChrome, type BrowserChromeHandle } from './components/BrowserChrome';
 import { NewTabPage } from './views/NewTabPage';
 import { SettingsPage } from './views/SettingsPage';
 
 const EMPTY_BROWSER_STATE: BrowserState = { tabs: [], activeTabId: null };
 const PREVIEW_BROWSER_STATE: BrowserState = {
-  tabs: [{
-    id: 'preview-new-tab',
-    title: '新标签页',
-    url: null,
-    loading: false,
-    canGoBack: false,
-    canGoForward: false
-  }],
+  tabs: [
+    createPreviewTab('preview-new-tab', '新标签页'),
+    createPreviewTab('preview-devices', '设备管理'),
+    createPreviewTab('preview-dashboard', '状态看板')
+  ],
   activeTabId: 'preview-new-tab'
 };
+
+function createPreviewTab(id: string, title: string): BrowserTabState {
+  return { id, title, url: null, loading: false, canGoBack: false, canGoForward: false };
+}
+
+function reorderTabs(
+  tabs: BrowserTabState[],
+  tabId: string,
+  targetTabId: string,
+  position: TabDropPosition
+): BrowserTabState[] {
+  const orderedIds = reorderIds(tabs.map(tab => tab.id), tabId, targetTabId, position);
+  if (!orderedIds) return tabs;
+  const tabsById = new Map(tabs.map(tab => [tab.id, tab]));
+  return orderedIds.map(id => tabsById.get(id)!);
+}
 
 export default function App() {
   const browserChrome = useRef<BrowserChromeHandle>(null);
@@ -73,6 +87,17 @@ export default function App() {
     void window.electronAPI?.closeTab(tabId);
   }, []);
 
+  const reorderTab = useCallback((tabId: string, targetTabId: string, position: TabDropPosition) => {
+    if (window.electronAPI) {
+      void window.electronAPI.reorderTab(tabId, targetTabId, position);
+      return;
+    }
+    setBrowserState(current => ({
+      ...current,
+      tabs: reorderTabs(current.tabs, tabId, targetTabId, position)
+    }));
+  }, []);
+
   const goBack = useCallback(() => {
     if (activeTabId) void window.electronAPI?.goBack(activeTabId);
   }, [activeTabId]);
@@ -114,6 +139,7 @@ export default function App() {
         onCreateTab={createTab}
         onActivateTab={activateTab}
         onCloseTab={closeTab}
+        onReorderTab={reorderTab}
         onNavigate={navigate}
         onGoBack={goBack}
         onGoForward={goForward}
