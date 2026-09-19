@@ -13,7 +13,7 @@ Box 不是面向公共互联网的通用浏览器，也不是安全隔离容器�
 - 访问局域网、专网、本机服务、IP 地址和设备管理页面
 - 展示数据看板、信息大屏、展厅内容和固定终端页面
 - 兼容使用自签名证书、宽松同源策略或特殊 CSP 的受信任旧系统
-- 通过配置文件和启动参数设置启动地址、全屏、置顶和主页按钮行为
+- 通过配置文件和启动参数设置启动地址、全屏、置顶、背景和兼容模式
 
 默认的 `permissive` 兼容模式会忽略证书错误、关闭 Electron Web Security，并为页面设置宽松 CSP，以减少 Chromium 默认安全策略对受控 Web 程序的限制。也可以切换为遵循浏览器安全策略的 `standard` 模式。两种模式都不会绕过服务器登录、网络 ACL、VPN、防火墙或操作系统权限，也不保证所有要求安全上下文的 Web API 都能在普通 HTTP 页面运行。
 
@@ -51,7 +51,7 @@ pnpm install
 pnpm start        # 启动 Electron 开发模式
 pnpm dev          # 仅启动 React/Vite renderer
 pnpm preview      # 预览已经生成的 renderer 生产构建
-pnpm test         # 运行配置与 URL 单元测试
+pnpm test         # 运行配置、URL、标签排序和加载错误单元测试
 pnpm check        # 检查 renderer、Electron、shared 和构建配置
 pnpm check:node   # 仅检查 Electron、shared 和构建配置
 pnpm build        # 运行测试、类型检查并构建 renderer
@@ -59,7 +59,7 @@ pnpm build        # 运行测试、类型检查并构建 renderer
 
 `pnpm start` 和 Electron 打包命令会按需准备当前平台的 Electron 运行时，首次执行需要联网下载。
 
-项目使用 Node.js 内置测试运行器覆盖配置、URL 边界和标签排序规则；当前没有 lint、格式化或覆盖率命令。`pnpm check` 是静态检查入口，所有构建命令会先运行测试和静态检查。
+项目使用 Node.js 内置测试运行器覆盖配置解析、URL 边界、标签排序规则和加载错误文案；当前没有 lint、格式化或覆盖率命令。`pnpm check` 是静态检查入口，所有构建命令会先运行测试和静态检查。
 
 ## 打包
 
@@ -172,10 +172,21 @@ Box.exe --url=http://192.168.1.10 --fullscreen=true --always-on-top=true
 ## 项目结构
 
 ```text
-src/       React/Chakra UI 浏览器外壳、新标签页、主题系统和最近地址
-electron/  Electron 主进程、标签页视图、预加载、IPC、配置和会话策略
-shared/    跨进程类型和 HTTP URL 规范化
-assets/    构建所需的应用图标
+src/
+  components/     浏览器外壳与 Chakra Provider
+  hooks/          设置、主题和本地持久化状态
+  views/          新标签页、设置页和网页加载错误页
+  App.tsx         本地页面与浏览器状态编排
+electron/
+  app-config.mts  配置文件、命令行和默认值合并
+  app-lifecycle.ts 应用启动与会话策略
+  window-manager.ts 主窗口、WebContentsView 标签和导航状态
+  ipc-handlers.ts 固定 IPC 入口与调用方校验
+  preload.ts      最小化 renderer 桥接 API
+shared/           跨进程类型、URL、标签排序和加载错误规则
+scripts/          发布说明提取与版本校验
+assets/           各平台构建所需的应用图标
+.github/workflows/ CI、原生打包测试与正式发布流程
 ```
 
 启动链路为 `electron/main.ts` → `electron/app-lifecycle.ts` → `electron/window-manager.ts`。浏览器外壳保留在主窗口中，每个远程标签页运行在独立的 `WebContentsView` 中。两者都启用上下文隔离并关闭 Node 集成；远程标签页不加载预加载脚本。需要特权能力时保持以下固定边界：

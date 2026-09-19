@@ -20,8 +20,8 @@ Treat Electron security behavior as load-bearing. The default `permissive` compa
 ## Key Directories
 
 - `src/` — React 19 renderer: persistent Chakra UI browser shell, local new-tab view, theme system, hooks, and platform-only CSS.
-- `electron/` — privileged main/preload code: lifecycle, BrowserWindows, IPC, configuration, session setup, and page injection.
-- `shared/` — cross-boundary types and URL normalization.
+- `electron/` — privileged main/preload code: lifecycle, BrowserWindows, IPC, configuration, session setup, and remote-page management.
+- `shared/` — cross-boundary types plus pure URL, tab-order, and load-error rules.
 - `assets/` — build-time application icons; only `assets/index.ico` is copied into the packaged application files.
 - `dist/`, `dist-electron/`, `build/` — generated outputs; never hand-edit or treat as source.
 
@@ -59,7 +59,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - React files use typed function components and hooks. Use Chakra UI's unmodified `defaultSystem`, semantic tokens, component recipes, variants, sizes, radii, and native motion instead of custom design tokens or handwritten component CSS; keep raw CSS limited to Electron drag regions and browser-platform behavior that Chakra cannot express portably.
 - Use `lucide-react` for interface icons. Import individual icon components for tree-shaking; do not substitute Unicode symbols, emoji, handwritten SVG, or a dynamic all-icons registry.
 - Use two-space indentation. Existing TypeScript generally uses single quotes and semicolons, though formatting is not fully uniform and no formatter enforces it.
-- Use camelCase for functions/variables, `handle…` for handlers, `use…` for composables, PascalCase for types/components, and `SCREAMING_SNAKE_CASE` for generator constants.
+- Use camelCase for functions/variables, `handle…` for handlers, `use…` for hooks, PascalCase for types/components, and `SCREAMING_SNAKE_CASE` for generator constants.
 - TypeScript implementation and hook files use kebab-case (`window-manager.ts`, `use-app-settings.tsx`); React components and views use PascalCase (`BrowserChrome.tsx`, `NewTabPage.tsx`, `SettingsPage.tsx`).
 - Put reusable cross-process contracts in `shared/types.mts`. Keep filesystem, session, protocol, and `BrowserWindow` access in `electron/`; keep UI and renderer state in `src/`.
 - Reuse functional seams: explicit parameters such as `BrowserWindow`, pure config parsing, module getters, React hooks, and guard clauses. There is no DI container, class service layer, global client store, or second state system.
@@ -85,6 +85,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - `electron/app-config.mts` and `electron/app-config.test.mts` — typed config loading, compatibility migration, CLI merging, path resolution, and tests.
 - `shared/types.mts`, `shared/url.mts`, `shared/url.test.mts`, `shared/tab-order.mts`, `shared/tab-order.test.mts`, `shared/load-error.mts`, `shared/load-error.test.mts` — cross-boundary browser/tab contracts, tested HTTP(S) normalization, pure tab-order rules, and user-facing load-error messages.
 - `electron/app-lifecycle.ts`, `electron/window-manager.ts`, `electron/preload.ts`, `electron/ipc-handlers.ts` — main runtime and trust boundary.
+- `src/views/BrowserErrorPage.tsx` — Chakra UI fallback shown when a remote main-document load fails.
 - `README.md` — user-facing commands, CLI/config flags, themes, and manual behavior examples.
 
 ## Runtime/Tooling Preferences
@@ -106,7 +107,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - For Electron behavior, launch `pnpm start` and exercise the changed path. Relevant smoke scenarios include creating/switching/closing tabs, URL navigation/load failure, back/forward/reload/home, popup-to-tab behavior, valid and invalid config/CLI precedence, session/cache clearing, fullscreen/always-on-top behavior, custom backgrounds, and `Ctrl/Cmd + T/W/L` shortcuts.
 - For packaging changes, use the checked `pnpm build:electron` or the relevant platform script and verify the expected files under `build/`.
 - Before moving a release tag, run Package Test manually from GitHub Actions when packaging or dependency behavior has changed.
-- Extend the existing Node tests for configuration precedence, URL normalization, and tab ordering. If a browser/Electron runner is later added, prioritize IPC validation, theme persistence, tab navigation failures, and window behavior.
+- Extend the existing Node tests for configuration precedence, URL normalization, tab ordering, and load-error messages. If a browser/Electron runner is later added, prioritize IPC validation, theme persistence, tab navigation failures, and window behavior.
 
 ## Release & Changelog Conventions
 
