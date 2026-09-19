@@ -19,6 +19,7 @@ import {
   Minus,
   Minimize,
   Moon,
+  Pin,
   Plus,
   RotateCw,
   Settings,
@@ -71,7 +72,7 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ tabId: string; position: TabDropPosition } | null>(null);
-  const { isDarkMode, toggleTheme } = useAppSettings();
+  const { settings, isDarkMode, toggleTheme, updateSetting } = useAppSettings();
   const activeTab = useMemo(
     () => state.tabs.find(tab => tab.id === state.activeTabId) ?? null,
     [state.activeTabId, state.tabs]
@@ -191,7 +192,7 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
           size="sm"
           colorPalette="blue"
           minWidth="0"
-          maxWidth="min(56rem, calc(100vw - 15rem))"
+          maxWidth="min(56rem, calc(100vw - 17rem))"
           onValueChange={({ value }) => onActivateTab(value)}
         >
           <Tabs.List
@@ -283,6 +284,17 @@ export const BrowserChrome = forwardRef<BrowserChromeHandle, BrowserChromeProps>
           attached
           alignSelf="center"
         >
+          <IconButton
+            aria-label={settings.alwaysOnTop ? '取消窗口置顶' : '窗口置顶'}
+            title={settings.alwaysOnTop ? '取消窗口置顶' : '窗口置顶'}
+            aria-pressed={settings.alwaysOnTop}
+            colorPalette={settings.alwaysOnTop ? 'blue' : 'gray'}
+            size="sm"
+            variant={settings.alwaysOnTop ? 'subtle' : 'ghost'}
+            onClick={() => updateSetting('alwaysOnTop', !settings.alwaysOnTop)}
+          >
+            <Pin aria-hidden />
+          </IconButton>
           <WindowButton
             label={isFullscreen ? '退出全屏' : '进入全屏'}
             title={isFullscreen ? '退出全屏 (F11)' : '全屏 (F11)'}

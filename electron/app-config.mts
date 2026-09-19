@@ -11,14 +11,12 @@ const KNOWN_CONFIG_KEYS = new Set([
   'url',
   'fullscreen',
   'alwaysOnTop',
-  'singlePage',
   'theme',
   'background',
   'compatibilityMode',
   'link',
   'mode',
   'window',
-  'page',
   'bg'
 ]);
 
@@ -26,7 +24,6 @@ interface ConfigLayer {
   url?: string | null;
   fullscreen?: boolean;
   alwaysOnTop?: boolean;
-  singlePage?: boolean;
   theme?: ThemeName | null;
   background?: string | null;
   compatibilityMode?: CompatibilityMode;
@@ -47,7 +44,6 @@ const DEFAULT_CONFIG = {
   url: null,
   fullscreen: false,
   alwaysOnTop: false,
-  singlePage: false,
   theme: null,
   background: null,
   compatibilityMode: 'permissive'
@@ -154,15 +150,6 @@ export function parseConfigObject(value: unknown, logger: ConfigLogger = console
     if (windowMode) parsed.alwaysOnTop = windowMode === 'top';
   }
 
-  if ('singlePage' in config) {
-    const singlePage = normalizeBoolean(config.singlePage, 'singlePage', logger);
-    if (singlePage !== undefined) parsed.singlePage = singlePage;
-  } else if ('page' in config) {
-    warnLegacyConfig('page', 'singlePage', logger);
-    const pageMode = normalizeChoice(config.page, ['single', 'multi'], 'page', logger);
-    if (pageMode) parsed.singlePage = pageMode === 'single';
-  }
-
   if ('theme' in config) {
     const theme = config.theme === null
       ? null
@@ -199,7 +186,6 @@ function parseCommandLine(args: string[], logger: ConfigLogger): ConfigLayer {
   const url = canonicalUrl ?? legacyUrl;
   const fullscreen = getArgument(args, 'fullscreen');
   const alwaysOnTop = getArgument(args, 'always-on-top');
-  const singlePage = getArgument(args, 'single-page');
   const canonicalBackground = getArgument(args, 'background');
   const legacyBackground = getArgument(args, 'bg');
   const background = canonicalBackground ?? legacyBackground;
@@ -235,17 +221,6 @@ function parseCommandLine(args: string[], logger: ConfigLogger): ConfigLayer {
       warnLegacyConfig('-window', '-always-on-top', logger);
       const normalizedWindow = normalizeChoice(windowMode, ['top', 'normal'], 'window', logger);
       if (normalizedWindow) parsed.alwaysOnTop = normalizedWindow === 'top';
-    }
-  }
-  if (singlePage !== undefined) {
-    const normalizedSinglePage = normalizeBoolean(singlePage, 'single-page', logger);
-    if (normalizedSinglePage !== undefined) parsed.singlePage = normalizedSinglePage;
-  } else {
-    const pageMode = getArgument(args, 'page');
-    if (pageMode !== undefined) {
-      warnLegacyConfig('-page', '-single-page', logger);
-      const normalizedPage = normalizeChoice(pageMode, ['single', 'multi'], 'page', logger);
-      if (normalizedPage) parsed.singlePage = normalizedPage === 'single';
     }
   }
   if (theme !== undefined) {
@@ -325,7 +300,6 @@ export function resolveAppConfig(
     url: mergedConfig.url,
     fullscreen: mergedConfig.fullscreen,
     alwaysOnTop: mergedConfig.alwaysOnTop,
-    singlePage: mergedConfig.singlePage,
     theme: mergedConfig.theme,
     backgroundPath: resolveBackgroundPath(mergedConfig.background, backgroundBaseDirectory, logger),
     compatibilityMode: mergedConfig.compatibilityMode,

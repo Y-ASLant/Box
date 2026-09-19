@@ -3,7 +3,6 @@
 import type {
   BrowserState,
   RendererConfig,
-  RuntimeSettings,
   TabDropPosition,
   WindowState
 } from '../shared/types.mts';
@@ -30,7 +29,7 @@ declare global {
     onBrowserStateChanged: (listener: (state: BrowserState) => void) => () => void;
     onFocusAddress: (listener: () => void) => () => void;
     getAppConfig: () => Promise<RendererConfig>;
-    applyRuntimeSettings: (settings: RuntimeSettings) => Promise<boolean>;
+    setAlwaysOnTop: (alwaysOnTop: boolean) => Promise<boolean>;
     getBackgroundPath: () => Promise<string | null>;
     clearHistoryAndCache: () => Promise<boolean>;
   }

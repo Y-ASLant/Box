@@ -7,11 +7,12 @@ import {
   Heading,
   IconButton,
   SegmentGroup,
+  SimpleGrid,
   Stack,
   Switch,
   Text
 } from '@chakra-ui/react';
-import { ArrowLeft, History, Layers, Monitor, Pin } from 'lucide-react';
+import { ArrowLeft, History, Monitor } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ThemePreference } from '../../shared/types.mts';
 import { useAppSettings } from '../hooks/use-app-settings';
@@ -31,37 +32,48 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
 
   return (
     <Box as="section" minHeight="full" overflow="auto" bg="bg.subtle">
-      <Container maxW="4xl" py={{ base: '6', md: '10' }}>
-        <Stack gap="8">
-          <Flex align="center" gap="3">
-            <IconButton aria-label="返回浏览器" title="返回浏览器" variant="ghost" onClick={onClose}>
+      <Container maxW="6xl" px={{ base: '4', md: '6' }} py={{ base: '5', md: '6' }}>
+        <Stack gap="5">
+          <Flex align="center" justify="space-between" gap="4">
+            <Flex align="center" gap="3" minWidth="0">
+              <IconButton
+                aria-label="返回浏览器"
+                title="返回浏览器"
+                size="sm"
+                variant="ghost"
+                flexShrink="0"
+                onClick={onClose}
+              >
               <ArrowLeft aria-hidden />
-            </IconButton>
-            <Box>
-              <Flex align="center" gap="3">
-                <Heading as="h1" size="2xl">设置</Heading>
-                <Badge colorPalette="green" variant="subtle">自动保存</Badge>
-              </Flex>
-              <Text mt="1" color="fg.muted" textStyle="sm">
-                更改会立即应用，并保存在此设备上。
-              </Text>
-            </Box>
+              </IconButton>
+              <Box minWidth="0">
+                <Heading as="h1" size="xl">设置</Heading>
+                <Text mt="0.5" color="fg.muted" textStyle="sm">
+                  管理浏览器外观和本地偏好。
+                </Text>
+              </Box>
+            </Flex>
+            <Badge colorPalette="green" variant="subtle" flexShrink="0">自动保存</Badge>
           </Flex>
 
-          <Card.Root variant="outline" size="lg">
-            <Card.Header>
-              <Card.Title>外观</Card.Title>
-              <Card.Description>选择浏览器外壳和本地页面的显示模式。</Card.Description>
-            </Card.Header>
-            <Card.Body>
-              <SettingsRow
-                icon={<Monitor aria-hidden />}
-                title="主题模式"
-                description="跟随系统会自动响应操作系统的明暗模式。"
-                control={(
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap="4" alignItems="start">
+            <SettingsCard
+              icon={<Monitor aria-hidden />}
+              title="外观"
+              description="选择浏览器外壳和本地页面的显示模式。"
+            >
+              <Stack gap="3">
+                <Box>
+                  <Text fontWeight="medium">主题模式</Text>
+                  <Text mt="0.5" color="fg.muted" textStyle="sm">
+                    跟随系统会自动响应操作系统的明暗模式。
+                  </Text>
+                </Box>
+                <Box overflowX="auto" pb="0.5">
                   <SegmentGroup.Root
                     value={settings.theme}
                     size="sm"
+                    width="fit-content"
                     onValueChange={({ value }) => {
                       if (value === 'system' || value === 'light' || value === 'dark') {
                         updateSetting('theme', value as ThemePreference);
@@ -71,91 +83,68 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                     <SegmentGroup.Indicator />
                     <SegmentGroup.Items items={THEME_OPTIONS} />
                   </SegmentGroup.Root>
-                )}
-              />
-            </Card.Body>
-          </Card.Root>
-
-          <Card.Root variant="outline" size="lg">
-            <Card.Header>
-              <Card.Title>浏览行为</Card.Title>
-              <Card.Description>这些选项会立即同步到 Electron 主窗口。</Card.Description>
-            </Card.Header>
-            <Card.Body>
-              <Stack gap="6">
-                <SettingsRow
-                  icon={<Pin aria-hidden />}
-                  title="窗口始终置顶"
-                  description="让 Box 保持在其他窗口上方。"
-                  control={(
-                    <SettingSwitch
-                      label="窗口始终置顶"
-                      checked={settings.alwaysOnTop}
-                      onCheckedChange={checked => updateSetting('alwaysOnTop', checked)}
-                    />
-                  )}
-                />
-                <SettingsRow
-                  icon={<Layers aria-hidden />}
-                  title="单页模式"
-                  description="新窗口链接复用当前标签页，并阻止继续创建标签页。"
-                  control={(
-                    <SettingSwitch
-                      label="单页模式"
-                      checked={settings.singlePage}
-                      onCheckedChange={checked => updateSetting('singlePage', checked)}
-                    />
-                  )}
-                />
+                </Box>
               </Stack>
-            </Card.Body>
-          </Card.Root>
+            </SettingsCard>
 
-          <Card.Root variant="outline" size="lg">
-            <Card.Header>
-              <Card.Title>隐私与历史</Card.Title>
-              <Card.Description>控制新标签页是否保留最近访问地址。</Card.Description>
-            </Card.Header>
-            <Card.Body>
-              <SettingsRow
-                icon={<History aria-hidden />}
-                title="记录最近访问"
-                description="关闭后会删除现有最近访问记录，也不再写入新记录。"
-                control={(
-                  <SettingSwitch
-                    label="记录最近访问"
-                    checked={settings.rememberRecentUrls}
-                    onCheckedChange={checked => updateSetting('rememberRecentUrls', checked)}
-                  />
-                )}
-              />
-            </Card.Body>
-          </Card.Root>
+            <SettingsCard
+              icon={<History aria-hidden />}
+              title="隐私与历史"
+              description="控制新标签页是否保留最近访问地址。"
+            >
+              <Flex align="center" justify="space-between" gap="5">
+                <Box>
+                  <Text fontWeight="medium">记录最近访问</Text>
+                  <Text mt="0.5" color="fg.muted" textStyle="sm">
+                    关闭后会删除已有记录，并停止写入新的访问地址。
+                  </Text>
+                </Box>
+                <SettingSwitch
+                  label="记录最近访问"
+                  checked={settings.rememberRecentUrls}
+                  onCheckedChange={checked => updateSetting('rememberRecentUrls', checked)}
+                />
+              </Flex>
+            </SettingsCard>
+          </SimpleGrid>
         </Stack>
       </Container>
     </Box>
   );
 }
 
-interface SettingsRowProps {
+interface SettingsCardProps {
   icon: ReactNode;
   title: string;
   description: string;
-  control: ReactNode;
+  children: ReactNode;
 }
 
-function SettingsRow({ icon, title, description, control }: SettingsRowProps) {
+function SettingsCard({ icon, title, description, children }: SettingsCardProps) {
   return (
-    <Flex align={{ base: 'flex-start', md: 'center' }} justify="space-between" gap="6" direction={{ base: 'column', md: 'row' }}>
-      <Flex align="flex-start" gap="3">
-        <Box color="fg.muted" pt="1">{icon}</Box>
-        <Box>
-          <Text fontWeight="medium">{title}</Text>
-          <Text mt="1" color="fg.muted" textStyle="sm">{description}</Text>
-        </Box>
-      </Flex>
-      <Box flexShrink="0">{control}</Box>
-    </Flex>
+    <Card.Root variant="outline" size="md" height="full">
+      <Card.Header pb="3">
+        <Flex align="flex-start" gap="3">
+          <Flex
+            align="center"
+            justify="center"
+            width="8"
+            height="8"
+            flexShrink="0"
+            borderRadius="md"
+            color="blue.fg"
+            bg="blue.subtle"
+          >
+            {icon}
+          </Flex>
+          <Box minWidth="0">
+            <Card.Title>{title}</Card.Title>
+            <Card.Description mt="1">{description}</Card.Description>
+          </Box>
+        </Flex>
+      </Card.Header>
+      <Card.Body pt="0">{children}</Card.Body>
+    </Card.Root>
   );
 }
 

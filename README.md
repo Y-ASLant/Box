@@ -28,7 +28,7 @@ Box 不是面向公共互联网的通用浏览器，也不是安全隔离容器�
 - 自定义窗口边框和标题栏控制，支持拖拽、缩放、全屏和置顶
 - 接管页面新窗口请求并在新标签页中打开
 - 浅色、深色主题；未指定时使用已保存偏好，首次使用按系统配色
-- 内置设置页，可持久化主题模式、窗口置顶、单页模式和最近访问偏好
+- 顶栏提供可持久化的窗口置顶按钮，设置页可管理主题模式和最近访问偏好
 - 最多六条最近访问地址，以及会话缓存与站点数据清理
 - 可配置新标签页背景
 
@@ -120,14 +120,13 @@ git push origin v1.1.0
 
 配置优先级为：内置默认值 < 配置文件 < 命令行参数。命令行支持单横线和双横线形式。
 
-地址栏右侧的设置按钮可以在运行时修改主题模式、窗口始终置顶、单页模式和最近访问记录。设置保存在当前系统用户的 Electron 本地存储中，并在下次启动时恢复；保存后的设置会在 renderer 启动后覆盖对应的文件或命令行初始值。首次打开设置前，仍以本节的配置文件和命令行结果作为初始值。
+顶栏的置顶按钮可以直接切换窗口始终置顶；地址栏右侧的设置按钮用于修改主题模式和最近访问记录。设置保存在当前系统用户的 Electron 本地存储中，并在下次启动时恢复；保存后的置顶与主题设置会在 renderer 启动后覆盖对应的文件或命令行初始值。首次渲染前，仍以本节的配置文件和命令行结果作为初始值。
 
 ```json
 {
   "url": "https://example.com",
   "fullscreen": true,
   "alwaysOnTop": true,
-  "singlePage": true,
   "theme": "dark",
   "background": "./background.jpg",
   "compatibilityMode": "permissive"
@@ -139,14 +138,13 @@ git push origin v1.1.0
 | `url` | `-url=<url>` | HTTP(S) 地址、域名或 IP | 显示本地启动页 | 启动后直接加载页面；未写协议时补充 `http://` |
 | `fullscreen` | `-fullscreen=<bool>` | `true`、`false` | `false` | 主窗口是否全屏启动 |
 | `alwaysOnTop` | `-always-on-top=<bool>` | `true`、`false` | `false` | 主窗口是否始终置顶 |
-| `singlePage` | `-single-page=<bool>` | `true`、`false` | `false` | 新窗口链接复用当前标签页并禁止新增标签 |
 | `theme` | `-theme=<theme>` | `light`、`dark` | 已保存偏好；首次使用按系统配色 | 影响浏览器外壳和新标签页 |
 | `background` | `-background=<path>` | 本地文件路径 | 默认背景 | 只影响新标签页 |
 | `compatibilityMode` | `-compatibility-mode=<mode>` | `permissive`、`standard` | `permissive` | 浏览器兼容与安全策略 |
 
 `permissive` 会忽略证书错误、关闭 Web Security 并放宽 CSP；`standard` 保留 Chromium 默认的证书、同源和 CSP 行为。无效类型、枚举值和未知字段会被忽略并写入主进程日志；不存在的背景文件不会显示。
 
-旧字段 `link`、`mode`、`window`、`page`、`bg` 以及对应旧命令行参数仍可被解析以兼容旧配置。原悬浮控制面板、隐藏控件配置及其命令行参数已经移除。
+旧字段 `link`、`mode`、`window`、`bg` 以及对应旧命令行参数仍可被解析以兼容旧配置。单页模式及其 `singlePage`、`page`、`-single-page`、`-page` 配置已经移除；原悬浮控制面板、隐藏控件配置及其命令行参数也已移除。
 
 开发模式下可直接传递参数：
 
@@ -164,9 +162,9 @@ Box.exe --url=http://192.168.1.10 --fullscreen=true --always-on-top=true
 
 - `Ctrl/Cmd + T` 新建标签页，`Ctrl/Cmd + W` 关闭当前标签页，`Ctrl/Cmd + L` 聚焦地址栏。
 - 按住标签并拖到其他标签的左半区或右半区，可以将其插入目标标签之前或之后；排序仅影响当前运行会话。
-- 标签栏右侧提供自定义全屏/退出全屏、最小化、最大化/还原和关闭按钮；`F11` 也可切换全屏。Windows 和 Linux 上关闭最后一个窗口后应用退出，macOS 遵循保留应用进程的常规行为。
+- 标签栏右侧提供窗口置顶、全屏/退出全屏、最小化、最大化/还原和关闭按钮；`F11` 也可切换全屏。置顶状态会持久化。Windows 和 Linux 上关闭最后一个窗口后应用退出，macOS 遵循保留应用进程的常规行为。
 - 主页按钮把当前标签恢复为本地新标签页。
-- 页面通过 `window.open` 等方式请求 HTTP(S) 新窗口时，普通模式会创建新标签页，单页模式会在当前标签页打开。其他协议会被拒绝。
+- 页面通过 `window.open` 等方式请求 HTTP(S) 新窗口时会创建新标签页，其他协议会被拒绝。
 - 新标签页最多保存六条最近地址。可以在设置页关闭记录功能；关闭后会删除已有最近地址并停止写入新记录。“清除记录”会清除整个 Electron 会话的 HTTP 缓存、Cookie、站点存储、Service Worker 和最近地址，但保留应用设置，并可能使已登录站点退出。
 - F12 和 `Ctrl/Cmd + Shift + I/J` 在应用窗口内被拦截；这些限制只是交互约束，不是安全控制。
 

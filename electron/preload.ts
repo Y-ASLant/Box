@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { BrowserState, RuntimeSettings, TabDropPosition, WindowState } from '../shared/types.mts';
+import type { BrowserState, TabDropPosition, WindowState } from '../shared/types.mts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getBrowserState: () => ipcRenderer.invoke('browser:get-state'),
@@ -36,7 +36,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('focus-address', handler);
   },
   getAppConfig: () => ipcRenderer.invoke('get-app-config'),
-  applyRuntimeSettings: (settings: RuntimeSettings) => ipcRenderer.invoke('settings:apply-runtime', settings),
+  setAlwaysOnTop: (alwaysOnTop: boolean) => ipcRenderer.invoke('window:set-always-on-top', alwaysOnTop),
   getBackgroundPath: () => ipcRenderer.invoke('get-background-path'),
   clearHistoryAndCache: () => ipcRenderer.invoke('clear-history-cache')
 });

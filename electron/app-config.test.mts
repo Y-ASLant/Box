@@ -30,7 +30,6 @@ test('解析新的强类型配置并以配置文件目录解析背景路径', t 
     url: 'intranet.local/app',
     fullscreen: true,
     alwaysOnTop: true,
-    singlePage: true,
     theme: 'dark',
     background: './assets/background.png',
     compatibilityMode: 'standard'
@@ -47,7 +46,6 @@ test('解析新的强类型配置并以配置文件目录解析背景路径', t 
   assert.equal(config.url, 'http://intranet.local/app');
   assert.equal(config.fullscreen, true);
   assert.equal(config.alwaysOnTop, true);
-  assert.equal(config.singlePage, true);
   assert.equal(config.theme, 'dark');
   assert.equal(config.backgroundPath, backgroundPath);
   assert.equal(config.compatibilityMode, 'standard');
@@ -87,7 +85,6 @@ test('兼容旧配置字段并输出迁移提示', t => {
     link: 'legacy.local',
     mode: 'fullscreen',
     window: 'top',
-    page: 'single',
     bg: ''
   }));
   const { logger, messages } = createLogger();
@@ -102,9 +99,28 @@ test('兼容旧配置字段并输出迁移提示', t => {
   assert.equal(config.url, 'http://legacy.local/');
   assert.equal(config.fullscreen, true);
   assert.equal(config.alwaysOnTop, true);
-  assert.equal(config.singlePage, true);
   assert.equal(config.backgroundPath, null);
-  assert.ok(messages.warn.filter(message => message.includes('已弃用')).length >= 5);
+  assert.ok(messages.warn.filter(message => message.includes('已弃用')).length >= 4);
+});
+
+test('忽略已移除的单页模式配置', t => {
+  const directory = createTestDirectory(t);
+  writeFileSync(join(directory, 'config.json'), JSON.stringify({
+    singlePage: true,
+    page: 'single'
+  }));
+  const { logger, messages } = createLogger();
+
+  const config = resolveAppConfig(
+    ['electron', '.', '--single-page=true', '--page=single'],
+    false,
+    { cwd: directory, executablePath: join(directory, 'electron.exe') },
+    logger
+  );
+
+  assert.equal('singlePage' in config, false);
+  assert.ok(messages.warn.some(message => message.includes('singlePage')));
+  assert.ok(messages.warn.some(message => message.includes('page')));
 });
 
 test('打包模式默认读取可执行文件旁的配置', t => {

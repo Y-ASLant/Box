@@ -50,8 +50,7 @@ function startApplication(config: ResolvedConfig) {
     startUrl: config.url,
     fullscreen: config.fullscreen,
     alwaysOnTop: config.alwaysOnTop,
-    webSecurity: config.compatibilityMode === 'standard',
-    singlePage: config.singlePage
+    webSecurity: config.compatibilityMode === 'standard'
   });
 }
 

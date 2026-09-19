@@ -13,7 +13,7 @@ Treat Electron security behavior as load-bearing. The default `permissive` compa
 - `electron/window-manager.ts` owns the frameless main `BrowserWindow`, ordered `WebContentsView` tabs, active-tab layout, navigation history, page titles, new-window handling, shortcuts, and cleanup. The React tab strip provides tab drag-to-reorder, the custom window drag region, visible border, and window controls.
 - The React renderer starts at `src/main.tsx`. `src/App.tsx` keeps the browser shell mounted; `src/views/NewTabPage.tsx` is the local new-tab page. Browser commands flow through the typed preload bridge to the main-process tab manager.
 - Privileged flow must remain: React component/hook → typed `window.electronAPI` in `src/vite-env.d.ts` → fixed bridge method/channel in `electron/preload.ts` → handler in `electron/ipc-handlers.ts` → Electron operation.
-- HTTP(S) new-window requests become tabs, or reuse the current tab in `singlePage` mode; other protocols are denied.
+- HTTP(S) new-window requests become tabs; other protocols are denied.
 - Main-process state is module-scoped where ownership is singular (the main window, tab map, active tab, and local-page visibility). Renderer state uses React state, effects, refs, callbacks, and the focused settings context in `use-app-settings.tsx`; persisted keys are `appSettings` and `recentUrls`. Clearing browsing data preserves application settings.
 - The home action resets the current tab to the local new-tab page.
 
@@ -97,7 +97,7 @@ There are no `lint`, `format`, or coverage commands. Do not invent or claim them
 - electron-builder packages only `dist/**/*`, `dist-electron/**/*`, and the runtime `assets/index.ico`; source-only icons stay outside `app.asar`. React and Chakra UI remain dev dependencies because Vite fully bundles them and packaged runtime `node_modules` is intentionally empty. Windows uses x64 NSIS; macOS uses DMG for x64 and arm64; Linux uses AppImage/deb/rpm for x64 and arm64. Release filenames include version, platform, and architecture.
 - Electron 44 downloads its platform binary lazily. The `prestart` and `prebuild:electron` hooks run `install-electron --no`, and electron-builder reuses `node_modules/electron/dist` through `electronDist`.
 - `make build` removes `dist/`, `dist-electron/`, unpacked staging directories, builder diagnostics, and updater metadata only after packaging succeeds. Use `pnpm build:electron` when those intermediates are needed for debugging or runtime smoke checks.
-- Canonical runtime flags are `-url`, `-fullscreen`, `-always-on-top`, `-single-page`, `-theme`, `-background`, `-compatibility-mode`, and `-config`; one or two leading dashes are accepted. Legacy `-link`, `-mode`, `-window`, `-page`, and `-bg` remain compatibility aliases. Missing protocols are normalized to `http://`.
+- Canonical runtime flags are `-url`, `-fullscreen`, `-always-on-top`, `-theme`, `-background`, `-compatibility-mode`, and `-config`; one or two leading dashes are accepted. Legacy `-link`, `-mode`, `-window`, and `-bg` remain compatibility aliases. Missing protocols are normalized to `http://`.
 
 ## Testing & QA
 

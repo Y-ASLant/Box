@@ -17,7 +17,6 @@ const THEME_PREFERENCES = ['system', 'light', 'dark'] as const;
 const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
   alwaysOnTop: false,
-  singlePage: false,
   rememberRecentUrls: true
 };
 
@@ -50,7 +49,6 @@ function readStoredSettings(): StoredSettingsResult {
         settings: {
           theme: isThemePreference(value.theme) ? value.theme : DEFAULT_SETTINGS.theme,
           alwaysOnTop: typeof value.alwaysOnTop === 'boolean' ? value.alwaysOnTop : DEFAULT_SETTINGS.alwaysOnTop,
-          singlePage: typeof value.singlePage === 'boolean' ? value.singlePage : DEFAULT_SETTINGS.singlePage,
           rememberRecentUrls: typeof value.rememberRecentUrls === 'boolean'
             ? value.rememberRecentUrls
             : DEFAULT_SETTINGS.rememberRecentUrls
@@ -89,8 +87,7 @@ export function AppSettingsProvider({ children }: PropsWithChildren) {
       setSettings(current => ({
         ...current,
         theme: config.theme ?? 'system',
-        alwaysOnTop: config.alwaysOnTop,
-        singlePage: config.singlePage
+        alwaysOnTop: config.alwaysOnTop
       }));
       setInitialized(true);
     }).catch(error => {
@@ -118,10 +115,7 @@ export function AppSettingsProvider({ children }: PropsWithChildren) {
     if (!initialized) return;
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
     localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
-    void window.electronAPI?.applyRuntimeSettings({
-      alwaysOnTop: settings.alwaysOnTop,
-      singlePage: settings.singlePage
-    });
+    void window.electronAPI?.setAlwaysOnTop(settings.alwaysOnTop);
   }, [initialized, settings]);
 
   const updateSetting = useCallback(<Key extends keyof AppSettings>(key: Key, value: AppSettings[Key]) => {

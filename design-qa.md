@@ -1,50 +1,54 @@
-# Design QA: Box 1.1.0 browser shell
+# Settings Layout Design QA
 
-- Source visual truth: `C:\Users\Y-ASL\AppData\Local\Temp\codex-clipboard-b7738c96-119f-4c1d-a2b8-3d60fb5d7e0e.png`
-- Implementation screenshot: `F:\Projects_Code\Box\design-qa\implementation-1.1.0.png`
-- Full comparison: `F:\Projects_Code\Box\design-qa\comparison-1.1.0.png`
-- Focused comparisons: `F:\Projects_Code\Box\design-qa\comparison-header-1.1.0.png`, `F:\Projects_Code\Box\design-qa\comparison-content-1.1.0.png`
-- Viewport: 1444 × 904 CSS px
-- Source pixels: 1444 × 904
-- Implementation pixels: 1444 × 904
-- Density normalization: both captures compared at 1:1 pixel size; no scaling applied before comparison
-- State: light theme, local new-tab page, no recent sites, empty address fields
+- Source visual truth: `C:\Users\Y-ASL\AppData\Local\Temp\codex-clipboard-2573a8f4-fd20-4198-8460-a64567cf6a3b.png`
+- Implementation screenshot: `F:\Projects_Code\Box\build\design-qa\settings-824x503.png`
+- Side-by-side comparison: `F:\Projects_Code\Box\build\design-qa\comparison-side-by-side.png`
+- Viewport: 824 x 503 CSS pixels
+- Source pixels: 824 x 503
+- Implementation pixels: 824 x 503
+- Density normalization: direct 1:1 pixel comparison at device scale factor 1
+- State: light theme, settings page open, recent-history recording enabled
+
+## Full-view comparison evidence
+
+The implementation carries over the reference screen's compact top-aligned composition, equal-width two-column card grid, restrained outlined cards, clear group headings, muted descriptions, and controls placed within their owning card. The persistent Box browser shell remains above the settings content because it is part of the product architecture; the reference image instead uses a native settings title bar. This is an intentional product constraint rather than layout drift.
+
+## Focused region comparison evidence
+
+The full-size side-by-side image keeps card headings, descriptions, icons, segmented controls, and the history switch legible, so a separate crop was not needed. The implementation uses Chakra UI's default typography, spacing, semantic colors, borders, radii, and control recipes, while Lucide provides the established application icon style.
+
+## Required fidelity surfaces
+
+- Fonts and typography: hierarchy, weights, line heights, and wrapping are clear at the target size; the implementation intentionally follows the application's system-font stack.
+- Spacing and layout rhythm: 24-pixel page inset, 16-pixel grid gap, equal columns, compact header, and consistent card padding reproduce the reference's density without crowding controls.
+- Colors and visual tokens: neutral background, outlined surfaces, muted secondary text, blue control emphasis, and green saved-state feedback use Chakra semantic tokens and remain readable in light and dark themes.
+- Image quality and asset fidelity: the reference contains no raster product imagery; interface icons use Lucide components, with no placeholder, emoji, handwritten SVG, or CSS-drawn assets.
+- Copy and content: labels remain specific to Box's available settings rather than copying unrelated settings from the reference application.
 
 ## Findings
 
-No actionable P0, P1, or P2 mismatch remains.
+No actionable P0, P1, or P2 differences remain. The application-specific browser chrome and smaller feature set are intentional constraints, while the requested layout direction is preserved.
 
-- Fonts and typography: the implementation keeps the reference hierarchy, weight, line length, and fallback stack. The title, supporting copy, address bar, and tab labels remain optically consistent at the matched viewport.
-- Spacing and layout rhythm: the tab strip, navigation row, title, supporting copy, and launch form align with the reference after the second pass. Component radii now come from one shared scale.
-- Colors and visual tokens: the light palette preserves the reference's cool neutral surfaces and indigo accent. Dark-mode equivalents are defined through the same semantic tokens.
-- Image and icon fidelity: the two requested letter-brand blocks are intentionally absent. All remaining interface symbols, including the new fullscreen control, use Lucide components; there are no replacement glyphs or handcrafted SVGs.
-- Copy and content: the reference new-tab copy and labels are preserved. The red arrows are screenshot annotations and are intentionally not implemented.
+## Interaction and responsive checks
 
-## Interaction and runtime evidence
-
-- Browser-rendered preview checked in the Codex in-app Browser at 1444 × 904.
-- Theme toggle changed the interface to dark mode and back to light mode.
-- Submitting `ftp://invalid` displayed the expected HTTP(S)-only validation message without navigation.
-- Browser console check returned no warning or error entries.
-- Electron-only window controls are not callable in the renderer-only browser preview; their IPC, preload, and shared types are covered by the repository-wide TypeScript check and production build.
+- Theme selection was tested in light and dark states.
+- Returning from settings to the browser page was tested.
+- The recent-history switch was visually and accessibly verified; it was not toggled during QA because disabling it deletes existing recent-history data.
+- The 760 x 520 minimum-window layout was checked: cards collapse to one column and the content area scrolls normally.
+- Browser console errors and warnings: 0.
 
 ## Comparison history
 
-1. First pass: removing the hero `B` shifted the title and launch form upward by about 45 px, creating a P2 vertical-rhythm mismatch.
-2. Fix: changed the new-tab top padding from `clamp(5rem, 13vh, 8rem)` to `clamp(9rem, 21vh, 12rem)`.
-3. Second pass: the title and form align within roughly 7 px of the source while preserving the intentionally removed brand mark. The focused header comparison also confirms the removed top-left mark and added fullscreen control.
+The first rendered comparison had no actionable P0, P1, or P2 findings, so no visual repair iteration was required.
 
 ## Implementation checklist
 
-- [x] Remove both visible `B` blocks.
-- [x] Add custom fullscreen/exit-fullscreen control.
-- [x] Preserve the custom frame and browser-style tab strip.
-- [x] Use Lucide for all interface icons.
-- [x] Apply the shared typography, spacing, radius, color, shadow, and motion tokens.
-- [x] Verify the matched viewport, theme interaction, validation state, and console output.
+- Preserve the responsive two-column-to-single-column behavior.
+- Preserve Chakra default-system components and semantic tokens.
+- Keep current settings persistence and destructive history behavior unchanged.
 
 ## Follow-up polish
 
-No P3 follow-up is required for the requested scope.
+No blocking follow-up polish is required.
 
 final result: passed

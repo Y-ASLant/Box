@@ -6,7 +6,8 @@
 
 ### 新增
 
-- 新增 Chakra UI 设置页和地址栏设置入口，可持久化主题模式、窗口置顶、单页模式与最近访问偏好，并在运行时同步窗口行为。
+- 新增 Chakra UI 设置页和地址栏设置入口，可持久化主题模式与最近访问偏好。
+- 新增顶栏窗口置顶按钮，可直接切换并持久化置顶状态。
 - 新增标签拖拽排序，可按落点将标签插入目标标签之前或之后，并同步主进程中的真实标签顺序。
 
 ### 变更
@@ -14,11 +15,13 @@
 - 将 renderer 从 Vue 3 全面迁移到 React 19 与 Chakra UI 3，浏览器外壳、新标签页、表单、按钮、主题和明暗模式均使用 Chakra 默认系统、语义 Token、组件 recipe 与原生动效实现。
 - 压缩标签栏与导航栏高度并重新对齐地址栏和窗口控件，移除顶部工具栏中的多余留白。
 - 统一标签栏与导航栏的边缘留白，地址栏现在使用明确的四向等距内边距。
+- 设置页改为紧凑的响应式双栏卡片布局，并重新组织页头、分组说明与控件层级。
 - 更新 Vite、TypeScript、Lucide 与文档中的 renderer 架构说明，同时保持 Electron IPC 边界和远程页面隔离。
 - 清除浏览数据时保留应用设置，避免主题与浏览行为偏好被意外重置。
 
 ### 移除
 
+- 移除单页模式及其设置项、运行时分支、配置字段和命令行参数，HTTP(S) 新窗口统一创建为新标签页。
 - 移除 Vue、Vue TypeScript 检查器、Vue Vite 插件、旧 Vue 单文件组件、Vue composable 以及旧版手写 UI Token 和组件样式。
 
 ## [1.1.0] - 2026-09-19
@@ -82,7 +85,8 @@ This file records changes to Box (Browser Plus). Its format follows [Keep a Chan
 
 ### Added
 
-- Added a Chakra UI settings page and toolbar entry with persistent theme, always-on-top, single-page, and recent-history preferences, including live window behavior updates.
+- Added a Chakra UI settings page and toolbar entry with persistent theme and recent-history preferences.
+- Added a persistent always-on-top control to the window's top bar.
 - Added drag-to-reorder tabs with before/after placement and synchronized main-process tab ordering.
 
 ### Changed
@@ -90,11 +94,13 @@ This file records changes to Box (Browser Plus). Its format follows [Keep a Chan
 - Migrated the renderer completely from Vue 3 to React 19 and Chakra UI 3; Chakra's default system, semantic tokens, component recipes, and native motion now own the browser shell, new-tab page, forms, buttons, themes, and color modes.
 - Reduced the tab and navigation bar heights, realigned the address field and window controls, and removed excess toolbar whitespace.
 - Unified the tab-strip and navigation-bar edge spacing, with explicit equal padding around the address field.
+- Reworked the settings page into a compact responsive two-column card layout with clearer header, grouping, and control hierarchy.
 - Updated the Vite, TypeScript, Lucide, and documentation renderer architecture while preserving the Electron IPC boundary and remote-page isolation.
 - Browsing-data cleanup now preserves application settings so theme and browser-behavior preferences are not reset unexpectedly.
 
 ### Removed
 
+- Removed single-page mode, including its setting, runtime branches, configuration fields, and command-line arguments; HTTP(S) new-window requests now always create tabs.
 - Removed Vue, the Vue TypeScript checker, the Vue Vite plugin, legacy Vue single-file components and composable, and the old handwritten UI tokens and component styles.
 
 ## [1.1.0] - 2026-09-19

@@ -26,7 +26,6 @@ let mainWindow: BrowserWindow | null = null;
 let activeTabId: string | null = null;
 let nextTabId = 1;
 let tabWebSecurity = true;
-let singlePageMode = false;
 let localPageVisible = false;
 const tabs = new Map<string, ManagedTab>();
 
@@ -116,10 +115,9 @@ export function setLocalPageVisible(visible: boolean): boolean {
   return true;
 }
 
-export function applyRuntimeSettings(alwaysOnTop: boolean, singlePage: boolean): boolean {
+export function setWindowAlwaysOnTop(alwaysOnTop: boolean): boolean {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
   mainWindow.setAlwaysOnTop(alwaysOnTop);
-  singlePageMode = singlePage;
   return true;
 }
 
@@ -185,11 +183,7 @@ function createTabView(tab: ManagedTab): WebContentsView {
       console.warn(`已阻止非 HTTP(S) 新窗口: ${url}`);
       return { action: 'deny' };
     }
-    if (singlePageMode) {
-      void navigateBrowserTab(tab.id, url);
-    } else {
-      createBrowserTab(url, true);
-    }
+    createBrowserTab(url, true);
     return { action: 'deny' };
   });
 
@@ -198,14 +192,6 @@ function createTabView(tab: ManagedTab): WebContentsView {
 }
 
 export function createBrowserTab(url?: string | null, activate = true): BrowserState {
-  if (singlePageMode && tabs.size > 0) {
-    const existingTab = activeTabId
-      ? tabs.get(activeTabId)
-      : tabs.values().next().value as ManagedTab | undefined;
-    if (existingTab && url) void navigateBrowserTab(existingTab.id, url);
-    return getBrowserState();
-  }
-
   const id = `tab-${nextTabId++}`;
   const tab: ManagedTab = { id, title: NEW_TAB_TITLE, url: null, view: null };
   tabs.set(id, tab);
@@ -316,9 +302,8 @@ export function openNewTabPage(tabId: string): boolean {
 }
 
 export function createWindow(options: WindowOptions = {}) {
-  const { startUrl, fullscreen, alwaysOnTop, webSecurity = true, singlePage = false } = options;
+  const { startUrl, fullscreen, alwaysOnTop, webSecurity = true } = options;
   tabWebSecurity = webSecurity;
-  singlePageMode = singlePage;
   localPageVisible = false;
 
   const iconPath = path.join(

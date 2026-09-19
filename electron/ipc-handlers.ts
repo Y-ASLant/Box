@@ -9,16 +9,16 @@ import {
   getMainWindow,
   getRendererUrl,
   getWindowState,
-  applyRuntimeSettings,
   navigateBrowserTab,
   navigateHistory,
   openNewTabPage,
   reorderBrowserTab,
   reloadBrowserTab,
   setLocalPageVisible,
+  setWindowAlwaysOnTop,
   toggleWindowFullscreen
 } from './window-manager';
-import type { ResolvedConfig, RuntimeSettings, TabDropPosition } from '../shared/types.mts';
+import type { ResolvedConfig, TabDropPosition } from '../shared/types.mts';
 
 const HANDLER_CHANNELS = [
   'browser:get-state',
@@ -38,7 +38,7 @@ const HANDLER_CHANNELS = [
   'window:close',
   'window:get-state',
   'get-app-config',
-  'settings:apply-runtime',
+  'window:set-always-on-top',
   'get-background-path',
   'clear-history-cache'
 ] as const;
@@ -124,14 +124,12 @@ export function registerIPCHandlers(config: ResolvedConfig) {
     if (!isLocalRendererSender(event)) return {};
     return {
       theme: config.theme,
-      alwaysOnTop: config.alwaysOnTop,
-      singlePage: config.singlePage
+      alwaysOnTop: config.alwaysOnTop
     };
   });
-  ipcMain.handle('settings:apply-runtime', (event, settings: unknown) => {
-    if (!isLocalRendererSender(event) || !isRuntimeSettings(settings)) return false;
-    return applyRuntimeSettings(settings.alwaysOnTop, settings.singlePage);
-  });
+  ipcMain.handle('window:set-always-on-top', (event, alwaysOnTop: unknown) => withLocalSender(event, () => (
+    typeof alwaysOnTop === 'boolean' && setWindowAlwaysOnTop(alwaysOnTop)
+  )));
   ipcMain.handle('get-background-path', event => (
     isLocalRendererSender(event) ? getBackgroundUrl(config.backgroundPath) : null
   ));
@@ -145,12 +143,6 @@ export function registerIPCHandlers(config: ResolvedConfig) {
     });
     return true;
   });
-}
-
-function isRuntimeSettings(value: unknown): value is RuntimeSettings {
-  if (!value || typeof value !== 'object') return false;
-  const settings = value as Record<string, unknown>;
-  return typeof settings.alwaysOnTop === 'boolean' && typeof settings.singlePage === 'boolean';
 }
 
 function isTabDropPosition(value: unknown): value is TabDropPosition {
